@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package com.ido.robin.rpc;
+
+option java_package = "com.ido.robin.rpc.proto";
+option java_outer_classname = "RemoteCmd";
+
+message Cmd {
+   oneof oneCmd {
+    BasicCmd basicCmd = 1;
+    RemoteCopyRequest remoteCopyRequest = 2;
+   }
+
+}
+
+message BasicCmd {
+   CmdType type = 1;
+   string key = 2;
+   string value = 3;
+   int32 id = 4;
+   bytes data = 5;
+   string fileName = 6;
+
+  enum CmdType {
+    PUT = 0;
+    GET = 1;
+    DELETE = 2;
+    COPY = 3;
+  }
+
+
+}
+
+
+
+
+
+message RemoteCopyRequest{
+    int32 sourcePort = 1;
+    int32 targetPort = 2;
+    string sourceHost = 3;
+    string targetHost = 4;
+    int32 hashRangeStart = 5;
+    int32 hashRangeEnd = 6;
+    int32 id = 7;
+    CopyType type = 8;
+
+    enum CopyType {
+        ADD = 0;
+        REMOVE = 1;
+      }
+
+}

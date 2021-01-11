@@ -1,0 +1,12 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+target/
+*.iml
+agent/
+
+*.seg
+*.wal
+
+log
+
+distribution
