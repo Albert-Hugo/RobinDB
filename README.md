@@ -32,16 +32,28 @@ Include maven dependency
         <artifactId>core</artifactId>
         <version>1.0-SNAPSHOT</version>
     </dependency>
-            
+
 
 Then create a SSTable instance to manage content
 
-    SSTable ssTable = new SSTable(".");
+    SSTable ssTable = new SSTable();
     ssTable.put("test","client");
     ssTable.flush();
     System.out.println(ssTable.get("test"));
     ssTable.close();
     
+##### 1. support expire data
+        SSTable ssTable = new SSTable();
+        long expireTime = 10;
+        ssTable.put("test","client",expireTime);
+        System.out.println(ssTable.get("test"));
+        ssTable.close();
+##### 2. SSTablePlus support storing object data convenient
+        SSTblePlus ssTable = new SSTblePlus();
+        Person p = new Person();
+        ssTable.putObject("key",p);
+        Person result = ssTable.getObject("key");
+        
 #### Support Add and Remove server node dynamically
 
 ##### To add a new node to serve 

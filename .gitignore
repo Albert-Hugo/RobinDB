@@ -10,3 +10,7 @@ agent/
 log
 
 distribution
+*.classpath
+*.factorypath
+*.prefs
+*.project
