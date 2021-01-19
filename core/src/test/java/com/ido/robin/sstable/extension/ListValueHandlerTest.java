@@ -19,17 +19,16 @@ public class ListValueHandlerTest {
     public void testAdd() throws IOException {
         SSTablePlus ssTable = new SSTablePlus(path);
 
-        ssTable.listAdd("ido", "1".getBytes());
-        ssTable.listAdd("ido", "2".getBytes());
+        ssTable.listAdd("ido", "1");
+        ssTable.listAdd("ido", "2");
         ssTable.flush();
         List result = ssTable.getList("ido");
-        Map<String, List<String>> allList = ssTable.getAllList(String.class);
-
-        System.out.println(allList);
 
         Assert.assertEquals(2, result.size());
-        Assert.assertEquals("1", new String((byte[]) result.get(0)));
-        Assert.assertEquals("2", new String((byte[]) result.get(1)));
+        Assert.assertEquals("1", result.get(0));
+        Assert.assertEquals("2", result.get(1));
+        ssTable.listRemove("ido", "1");
+        ssTable.listRemove("ido", "2");
 
     }
 }

@@ -3,6 +3,9 @@ package com.ido.robin.sstable.extension;
 import com.ido.robin.sstable.SSTable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,85 +16,111 @@ import java.util.Set;
  */
 public class SSTablePlus extends SSTable {
 
-    private ListValuePlugin listValuePlugin;
-    private MapValuePlugin mapValuePlugin;
-    private SetValuePlugin setValuePlugin;
     private JsonValuePlugin jsonValuePlugin;
 
 
     public SSTablePlus(String path) throws IOException {
         super(path);
-        listValuePlugin = new ListValuePlugin(this);
-        mapValuePlugin = new MapValuePlugin(this);
-        setValuePlugin = new SetValuePlugin(this);
         jsonValuePlugin = new JsonValuePlugin(this);
     }
 
     public SSTablePlus(String path, boolean flushEveryTime) throws IOException {
         super(path, flushEveryTime);
-        listValuePlugin = new ListValuePlugin(this);
-        mapValuePlugin = new MapValuePlugin(this);
-        setValuePlugin = new SetValuePlugin(this);
     }
 
     public List getList(String key) {
-        return listValuePlugin.getList(key);
+        List<Object> list = getObject(key);
+        if (list == null) {
+            list = new ArrayList<>();
+        }
+        return list;
     }
 
-    public <T> Map<String, List<T>> getAllList(Class<T> targetClz) {
-        return listValuePlugin.getAllList(targetClz);
+    public void listAdd(String key, String val) {
+
+        List l = getList(key);
+        l.add(val);
+        putObject(key,l);
+        flush();
     }
 
-    public Map<String, List<Object>> getAllList() {
-        return listValuePlugin.getAllList();
-    }
-
-    public void listAdd(String key, byte[] val) {
-        listValuePlugin.listAdd(key, val);
-    }
-
-    public void listRemove(String key, byte[] val) {
-        listValuePlugin.listRemove(key, val);
+    public void listRemove(String key, String val) {
+        List l = getList(key);
+        l.remove(val);
+        putObject(key,l);
+        flush();
     }
 
     public Set getSet(String key) {
-        return setValuePlugin.getSet(key);
+        Set<Object> set = getObject(key);
+        if (set == null) {
+            set = new HashSet<>();
+        }
+        return set;
     }
 
     public boolean setRemove(String k, String v) {
-        return setValuePlugin.setRemove(k, v);
+        Set set = getSet(k);
+        boolean result = set.remove(v);
+        putObject(k, set);
+        flush();
+        return result;
     }
 
     public void setClear(String k) {
-        setValuePlugin.setClear(k);
+        remove(k);
+        flush();
+
     }
 
     public void setAdd(String key, String val) {
-        setValuePlugin.setAdd(key, val);
+        Set<Object> set = getObject(key);
+        if (set == null) {
+            set = new HashSet<>();
+        }
+        set.add(val);
+        putObject(key, set);
+        flush();
     }
 
     public Map getMap(String key) {
-        return mapValuePlugin.getMap(key);
+        Map<String, Object> map = getObject(key);
+        if (map == null) {
+            map = new HashMap<>();
+        }
+        return map;
     }
 
     public void mapAdd(String key, String hashK, String hashV) {
-        mapValuePlugin.mapAdd(key, hashK, hashV);
+        Map<String, Object> map = getObject(key);
+        if (map == null) {
+            map = new HashMap<>();
+        }
+        map.put(hashK, hashV);
+        putObject(key, map);
+        flush();
     }
 
     public void mapClear(String key) {
-        mapValuePlugin.mapClear(key);
+       Map map = getMap(key);
+       map.clear();
+       putObject(key,map);
+       flush();
     }
 
     public void mapRemove(String key, String hashK) {
-        mapValuePlugin.mapRemove(key, hashK);
+        Map map = getMap(key);
+        map.remove(hashK);
+        putObject(key,map);
+        flush();
     }
 
     public void putObject(String key, Object val) {
         jsonValuePlugin.put(key, val);
     }
 
-    public void putObject(String key, Object val,long expiredTime) {
-        jsonValuePlugin.put(key, val,expiredTime);
+    public void putObject(String key, Object val, long expiredTime) {
+        jsonValuePlugin.put(key, val, expiredTime);
     }
 
     public <T> T getObject(String key) {
