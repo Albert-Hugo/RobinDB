@@ -175,10 +175,12 @@ public class WalManager {
         walDataFile.batchAppend(snapshotLogs);
         clearOldFile(walDataFile);
 
-        long newestSequence = snapshotLogs.get(0).getSequence();
-        this.snapshotCheckPoint = newestSequence;
+        if (!snapshotLogs.isEmpty()) {
+            long newestSequence = snapshotLogs.get(0).getSequence();
+            this.snapshotCheckPoint = newestSequence;
+            log.info("task a snapshot complete");
+        }
 
-        log.info("task a snapshot complete");
     }
 
 
