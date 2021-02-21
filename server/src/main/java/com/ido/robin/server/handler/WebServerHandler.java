@@ -14,6 +14,7 @@ import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 /**
  * @author Ido
@@ -60,11 +61,12 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
+        log.info(request.uri());
         CompletableFuture fsRsp = CompletableFuture.supplyAsync(() -> {
-            String getCmd = "/get/";
-            String deleteCmd = "/delete/";
-            String putCmd = "/put";
-            if (request.method().name().equals("GET") && request.uri().startsWith(getCmd)) {
+            final String getCmd = "/get/";
+            final String deleteCmd = "/delete/";
+            final String putCmd = "/put";
+            if ("GET".equals(request.method().name()) && request.uri().startsWith(getCmd)) {
                 int i = request.uri().indexOf(getCmd);
                 String k = request.uri().substring(i + getCmd.length());
                 String val = SSTableManager.getInstance().get(k);
@@ -74,13 +76,13 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
                     return buildHttpRsp(val);
                 }
 
-            } else if (request.method().name().equals("DELETE") && request.uri().startsWith(deleteCmd)) {
+            } else if ("DELETE".equals(request.method().name()) && request.uri().startsWith(deleteCmd)) {
                 int i = request.uri().indexOf(deleteCmd);
                 String k = request.uri().substring(i + deleteCmd.length());
                 SSTableManager.getInstance().remove(k);
                 return buildHttpRsp("ok");
 
-            } else if (request.method().name().equals("POST") && request.uri().startsWith(putCmd)) {
+            } else if ("POST".equals(request.method().name()) && request.uri().startsWith(putCmd)) {
                 byte[] data = new byte[request.content().readableBytes()];
                 try {
                     request.content().readBytes(data);
@@ -92,9 +94,11 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
                 SSTableManager.getInstance().put(cmd.key, cmd.val);
                 return buildHttpRsp("ok");
             }
-
-            return null;
-        });
+            ByteBuf byteBuf = Unpooled.wrappedBuffer("".getBytes());
+            HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, byteBuf);
+            response.headers().add("content-length", 0);
+            return response;
+        }, Executors.newFixedThreadPool(100));
 
         fsRsp.thenAcceptAsync((response) -> {
             ctx.writeAndFlush(response);
