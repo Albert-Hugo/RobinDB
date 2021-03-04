@@ -3,6 +3,7 @@ package com.ido.robin.sstable.extension;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class ListValueHandlerTest {
 
     @Test
     public void testAdd() throws IOException {
-        SSTablePlus ssTable = new SSTablePlus(path);
+        SSTablePlus ssTable = new SSTablePlus();
 
         ssTable.listAdd("ido", "1");
         ssTable.listAdd("ido", "2");

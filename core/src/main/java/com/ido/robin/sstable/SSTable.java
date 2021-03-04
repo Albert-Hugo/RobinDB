@@ -52,6 +52,16 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
         this(path, false);
     }
 
+    private static String getPath(String path){
+        if(path.startsWith(".")){
+            path =System.getProperty("user.dir")+ path.substring(1);
+
+        }
+
+        return path;
+
+    }
+
     public List<SegmentFile> getSegmentFiles() {
         return segmentFiles;
     }
@@ -59,9 +69,11 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
     public SSTable(String path, boolean flushEveryTime) throws IOException {
 
         Objects.requireNonNull(path, "the data dir path can not be null");
-        if (path.startsWith(".")) {
-            throw new IllegalArgumentException("relative path is not supported  yet ");
-        }
+        path = getPath(path);
+//        if (path.startsWith(".")) {
+//            System.out.println(System.getProperty("user.dir"));
+//            throw new IllegalArgumentException("relative path is not supported  yet ");
+//        }
 
         if (path.endsWith(File.separator)) {
             this.path = path;

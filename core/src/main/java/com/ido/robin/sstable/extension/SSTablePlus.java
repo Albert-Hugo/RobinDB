@@ -19,6 +19,10 @@ public class SSTablePlus extends SSTable {
     private JsonValuePlugin jsonValuePlugin;
 
 
+    public SSTablePlus() throws IOException {
+        super(".");
+        jsonValuePlugin = new JsonValuePlugin(this);
+    }
     public SSTablePlus(String path) throws IOException {
         super(path);
         jsonValuePlugin = new JsonValuePlugin(this);
