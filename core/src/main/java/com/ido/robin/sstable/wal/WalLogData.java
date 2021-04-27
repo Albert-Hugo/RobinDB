@@ -79,8 +79,24 @@ public class WalLogData {
     public static class WalLogDataComparetor implements Comparator<WalLogData> {
 
         @Override
-        public int compare(WalLogData o1, WalLogData o2) {
-            return (int) (o1.sequence - o2.sequence);
+        public int compare(WalLogData a1, WalLogData a2) {
+            if(a1 == null && a2 == null){
+                return 0;
+            }
+            if(a1 == null){
+                return -1;
+            }
+
+            if(a2 == null){
+                return 1;
+            }
+            if(a1.sequence - a2.sequence >0 ){
+                return 1;
+            }else if(a1.sequence - a2.sequence <0){
+                return -1;
+            }
+
+            return 0;
         }
     }
 

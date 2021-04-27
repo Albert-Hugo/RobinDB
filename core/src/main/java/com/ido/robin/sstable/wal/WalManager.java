@@ -154,7 +154,24 @@ public class WalManager {
     public void takeSnapshot() throws IOException {
         //从wal 文件中遍历，出所有命令，然后合并成新的snapshot
         List<WalLogData> logData = listWalDatas((WalLogData a1, WalLogData a2) -> {
-            return (int) (a2.getSequence() - a1.getSequence());
+            if(a1 == null && a2 == null){
+                return 0;
+            }
+            if(a1 == null){
+                return 1;
+            }
+
+            if(a2 == null){
+                return -1;
+            }
+            if(a2.getSequence() - a1.getSequence() >0 ){
+                return 1;
+            }else if(a2.getSequence() - a1.getSequence() <0){
+                return -1;
+            }
+
+            return 0;
+
         });
 
         Map<String, SnapshotLogData> snapshotLogData = new HashMap<>();
