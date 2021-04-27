@@ -3,7 +3,7 @@ SSTable implement in Java
 
 
 ### usage
-    mvn clean package 
+    mvn clean package -DskipTests=true 
 
 After build success , then distribution package will be generated.
 
