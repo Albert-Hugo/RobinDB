@@ -1,6 +1,5 @@
 package com.ido.robin.sstable;
 
-import com.ido.robin.common.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -8,7 +7,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.ido.robin.sstable.SegmentFile.SEGMENT_FILE_SUFFIX;
@@ -22,7 +25,17 @@ import static com.ido.robin.sstable.SegmentFile.SEGMENT_FILE_SUFFIX;
  */
 @Slf4j
 public class LocalFileSystemSplitor implements FileSplitor {
-    final static int MAX_BLOCK_LIST_SIZE = Config.getInstance().getIntValue("max.block.list.size", 2000);
+    /**
+     * segment file 最大的block list 数
+     */
+    private int maxBlockListSize = 2000;
+
+    public LocalFileSystemSplitor() {
+    }
+
+    public LocalFileSystemSplitor(int maxBlockListSize) {
+        this.maxBlockListSize = maxBlockListSize;
+    }
 
     @Override
     public List<SegmentFile> listToBeSplittedSgFile(String path) {
@@ -43,7 +56,7 @@ public class LocalFileSystemSplitor implements FileSplitor {
                     })
                     .filter(Objects::nonNull)
                     .filter(f -> {
-                        return f.header.blockListSize > MAX_BLOCK_LIST_SIZE;
+                        return f.header.blockListSize > this.maxBlockListSize;
                     })
                     .map(f -> {
                         try {
@@ -75,7 +88,7 @@ public class LocalFileSystemSplitor implements FileSplitor {
 
             int totalFileSize = 0;
             for (Block block : blocks) {
-                if (totalFileSize < MAX_BLOCK_LIST_SIZE / 2) {
+                if (totalFileSize < this.maxBlockListSize / 2) {
                     totalFileSize = totalFileSize + 1;
                     boundle.add(block);
                 } else {
@@ -125,11 +138,11 @@ public class LocalFileSystemSplitor implements FileSplitor {
     }
 
     private void bundleBlockToFIle(String path, List<String> resultFiles, List<Block> boundle) {
-        String fName = UUID.randomUUID().toString().replace("-","")+ SEGMENT_FILE_SUFFIX;
+        String fName = UUID.randomUUID().toString().replace("-", "") + SEGMENT_FILE_SUFFIX;
         try (SegmentFile file = new SegmentFile(path + fName)) {
             file.addBlockList(boundle);
             file.flush();
-            log.debug("splitted file {},key range {} ,{}  ",file.getOriginalFileName(),file.getHeader().keyStart,file.getHeader().keyEnd);
+            log.debug("splitted file {},key range {} ,{}  ", file.getOriginalFileName(), file.getHeader().keyStart, file.getHeader().keyEnd);
             resultFiles.add(file.getOriginalFileName());
         } catch (IOException e) {
             log.error(e.getMessage(), e);

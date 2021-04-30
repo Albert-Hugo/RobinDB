@@ -1,13 +1,16 @@
 package com.ido.robin.sstable;
 
-import com.ido.robin.common.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -30,6 +33,10 @@ public class FileManager {
     private Thread splitTask;
     private Thread autoFlushTask;
     private Thread expiredDataTask;
+    private int splitTimeInterval = 120;
+    private int autoFlushTimeInterval = 120;
+    private int deleteExpiredDataTimeInterval = 60;
+    private int autoFlushCmdsSize = 100;
 
 
     public FileManager(FileSplitor fileSplitor) {
@@ -40,6 +47,37 @@ public class FileManager {
         this.fileSplitor = new LocalFileSystemSplitor();
     }
 
+    public int getSplitTimeInterval() {
+        return splitTimeInterval;
+    }
+
+    public void setSplitTimeInterval(int splitTimeInterval) {
+        this.splitTimeInterval = splitTimeInterval;
+    }
+
+    public int getAutoFlushTimeInterval() {
+        return autoFlushTimeInterval;
+    }
+
+    public void setAutoFlushTimeInterval(int autoFlushTimeInterval) {
+        this.autoFlushTimeInterval = autoFlushTimeInterval;
+    }
+
+    public int getDeleteExpiredDataTimeInterval() {
+        return deleteExpiredDataTimeInterval;
+    }
+
+    public void setDeleteExpiredDataTimeInterval(int deleteExpiredDataTimeInterval) {
+        this.deleteExpiredDataTimeInterval = deleteExpiredDataTimeInterval;
+    }
+
+    public int getAutoFlushCmdsSize() {
+        return autoFlushCmdsSize;
+    }
+
+    public void setAutoFlushCmdsSize(int autoFlushCmdsSize) {
+        this.autoFlushCmdsSize = autoFlushCmdsSize;
+    }
 
     /**
      * 监听当前目录下的所有segment 文件,自动拆分
@@ -143,17 +181,15 @@ public class FileManager {
      * @param path
      */
     public void setupAutoSplitTask(String path) {
-        int period = Config.getInstance().getIntValue("split.time.interval", 120);
-        setupAutoSplitTask(path, period, TimeUnit.SECONDS);
+        setupAutoSplitTask(path, splitTimeInterval, TimeUnit.SECONDS);
     }
 
     public void setupAutoFlush(String path) {
-        int period = Config.getInstance().getIntValue("auto.flush.time.interval", 5);
-        setupAutoFlush(path, period, TimeUnit.SECONDS);
+        setupAutoFlush(path, autoFlushTimeInterval, TimeUnit.SECONDS);
     }
 
     public void setupExpiredDataTask(String path) {
-        setupExpiredDataTask(path, 60, TimeUnit.SECONDS);
+        setupExpiredDataTask(path, deleteExpiredDataTimeInterval, TimeUnit.SECONDS);
     }
 
 
@@ -224,7 +260,7 @@ public class FileManager {
 
 
     class AutoFlushTask extends AbstractFileTask {
-        int size = Config.getInstance().getIntValue("auto.flush.cmds.size", 100);
+        int size =autoFlushCmdsSize;
 
         AutoFlushTask(String path, int period, TimeUnit timeUnit) {
             super(path, period, timeUnit);
