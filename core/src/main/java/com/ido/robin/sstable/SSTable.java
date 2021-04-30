@@ -106,13 +106,13 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
             }).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
         }
         walManager = new WalManager(this.path);
+        fileManager = new FileManager();
 
         recovery();
 
         this.index = new SparseIndexMem(segmentFiles);
         this.segmentFiles.sort(SegmentFile::compareTo);
 
-        fileManager = new FileManager();
 
         if (!flushEveryTime) {
             //如果不是每次都自动flush，则开启后台线程自动flush

@@ -24,7 +24,7 @@ public class FileManagerTest {
         ssTable.put("fds","12",System.currentTimeMillis() + 1000);
         ssTable.flush();
         try {
-            Thread.sleep(70 * 1000);
+            Thread.sleep(2 * 1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
