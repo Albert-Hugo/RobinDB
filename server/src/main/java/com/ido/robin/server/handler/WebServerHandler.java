@@ -91,6 +91,7 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 PutCmd cmd = GSON.fromJson(new String(data), PutCmd.class);
+                log.info("put key :{},val :{}",cmd.key,cmd.val);
                 SSTableManager.getInstance().put(cmd.key, cmd.val);
                 return buildHttpRsp("ok");
             }
