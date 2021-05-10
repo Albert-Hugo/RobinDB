@@ -1,7 +1,9 @@
 package com.ido.robin.sstable;
 
+import com.ido.robin.common.CompressUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,16 @@ public class Block implements Comparable<Block> {
     protected static int VAL_LEN_SIZE = 8;
     protected static int EXPIRED_TIME_SIZE = 8;
     public final static long PERMANENT = -1;
+    /**
+     * 超过指定字节数的val ，自动压缩
+     */
+    public final static int COMPRESS_BYTE_THRESHOLD = 1024;
+    /**
+     * 标志值，表示已压缩
+     */
+    public final static int IS_COMPESS_FLAG = 1;
+    public final static int IS_NOT_COMPESS_FLAG = 0;
+
     String key;
     long keyLen;
     /**
@@ -27,7 +39,7 @@ public class Block implements Comparable<Block> {
     /**
      * 是否压缩
      */
-    byte isCompress = 0;
+    byte isCompress = IS_NOT_COMPESS_FLAG;
     long valLen;
     byte[] val;
     /**
@@ -52,7 +64,7 @@ public class Block implements Comparable<Block> {
         return fileName;
     }
 
-    public Block(String key, byte[] val) {
+    Block(String key, byte[] val) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(val);
         this.key = key;
@@ -70,6 +82,9 @@ public class Block implements Comparable<Block> {
     public Block(String key, byte[] val, long expiredTime) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(val);
+        if (val.length > COMPRESS_BYTE_THRESHOLD) {
+            this.isCompress = IS_COMPESS_FLAG;
+        }
         this.key = key;
         this.val = val;
         this.keyLen = key.getBytes().length;
@@ -87,8 +102,8 @@ public class Block implements Comparable<Block> {
         return expiredTime < System.currentTimeMillis();
     }
 
-    private boolean isCompress() {
-        return this.isCompress == 1;
+    public boolean needCompress() {
+        return this.valLen > COMPRESS_BYTE_THRESHOLD;
     }
 
 
@@ -165,16 +180,37 @@ public class Block implements Comparable<Block> {
      * @return
      */
     public byte[] bytes() {
-        int velSize = this.val.length;
-        int keySize = this.key.getBytes().length;
-        ByteBuffer bf = ByteBuffer.allocate(KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE + velSize + keySize);
-        bf.putLong(this.expiredTime);
-        bf.put(this.isCompress);
-        bf.putLong(this.keyLen);
-        bf.putLong(this.valLen);
-        bf.put(this.key.getBytes());
-        bf.put(this.val);
-        return bf.array();
+        byte[] compressVal;
+        if (needCompress()) {
+            try {
+                compressVal = CompressUtil.compress(this.val);
+                this.val = compressVal;
+                this.valLen = compressVal.length;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            int keySize = this.key.getBytes().length;
+            ByteBuffer bf = ByteBuffer.allocate((int) (KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE + this.valLen + keySize));
+            bf.putLong(this.expiredTime);
+            bf.put(this.isCompress);
+            bf.putLong(this.keyLen);
+            bf.putLong(this.valLen);
+            bf.put(this.key.getBytes());
+            bf.put(this.val);
+            return bf.array();
+
+        } else {
+            int keySize = this.key.getBytes().length;
+            ByteBuffer bf = ByteBuffer.allocate((int) (KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE + this.valLen + keySize));
+            bf.putLong(this.expiredTime);
+            bf.put(this.isCompress);
+            bf.putLong(this.keyLen);
+            bf.putLong(this.valLen);
+            bf.put(this.key.getBytes());
+            bf.put(this.val);
+            return bf.array();
+        }
+
     }
 
     @Override
