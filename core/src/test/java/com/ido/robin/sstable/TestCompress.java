@@ -1,5 +1,7 @@
 package com.ido.robin.sstable;
 
+import com.ido.robin.common.CompressUtil;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -509,54 +511,14 @@ public class TestCompress {
                     "        \"pages\": \"10\"\n" +
                     "    }\n" +
                     "}";
-            byte[] input = inputString.getBytes("UTF-8");
-            ByteArrayOutputStream ous = new ByteArrayOutputStream();
-//            ous.write(input);
-            DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(ous);
-            deflaterOutputStream.write(input);
-            deflaterOutputStream.finish();
-            deflaterOutputStream.flush();
-
-            byte[] result = ous.toByteArray();
+            byte[] result = CompressUtil.compress(inputString.getBytes());
             System.out.println(result.length);
             System.out.println(inputString.length());
-            InputStream is = new ByteArrayInputStream(result);
-            InflaterInputStream inflaterInputStream = new InflaterInputStream(is);
-            byte[] decompressData = new byte[1024];
-            int read = 0;
-            while ((read = inflaterInputStream.read(decompressData)) != -1) {
+            byte[] deResult = CompressUtil.decompress(result);
 
-                System.out.print(new String(Arrays.copyOf(decompressData, read), "UTF-8"));
-            }
 
-//            // Compress the bytes
-//            byte[] output = new byte[1024];
-//            Deflater compresser = new Deflater();
-//            compresser.setInput(input);
-//            compresser.finish();
-//            int compressedDataLength = compresser.deflate(output);
-//            while (compressedDataLength<input.length){
-//                output = new byte[1024 * 2];
-//                compresser.reset();
-//                compressedDataLength = compresser.deflate(output);
-//            }
-//
-//            compresser.end();
-//            String outputString = new String(output, 0, compressedDataLength, "UTF-8");
-//            System.out.println(outputString);
-//            System.out.println(compressedDataLength);
-//
-//            // Decompress the bytes
-//            Inflater decompresser = new Inflater();
-//            decompresser.setInput(output, 0, compressedDataLength);
-//            byte[] result = new byte[30000];
-//            int resultLength = decompresser.inflate(result);
-//            decompresser.end();
-//            System.out.println(resultLength);
-//
-//            // Decode the bytes into a String
-//             outputString = new String(result, 0, resultLength, "UTF-8");
-//            System.out.println(outputString);
+            Assert.assertEquals(new String(deResult), inputString);
+
         } catch (java.io.UnsupportedEncodingException ex) {
             // handle
         } catch (IOException e) {

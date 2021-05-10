@@ -24,7 +24,7 @@ public class SSTableTest {
     private Random random = new Random();
     private String path = "D:\\robin-data\\";
 
-        @Before
+//        @Before
     public void setup() throws IOException {
         SSTable ssTable = new SSTable(path);
         for (int i = 0; i < 10; i++) {
@@ -107,13 +107,16 @@ public class SSTableTest {
 //        SSTablePlus ssTable = new SSTablePlus(path);
 //        ssTable.put("1","dada",10 * 1000);
 //        System.out.println(ssTable.get("1"));;
-        int count = 5000;
+        int count = 100;
         int threadN = 5;
         CountDownLatch countDownLatch = new CountDownLatch(threadN);
         SSTablePlus ssTable = new SSTablePlus(path);
         ExecutorService executorService = Executors.newCachedThreadPool();
         long start = System.currentTimeMillis();
 
+        String key = RandomStringUtils.randomAlphanumeric(random.nextInt(20) + 1);
+        String val = RandomStringUtils.randomAlphanumeric(random.nextInt(10));
+        ssTable.put(key, val);
         for (int i = 0; i < threadN; i++) {
 
             executorService.execute(() -> {
