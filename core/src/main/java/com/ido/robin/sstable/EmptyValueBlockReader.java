@@ -18,7 +18,7 @@ public class EmptyValueBlockReader implements BlockReader {
     }
 
     @Override
-    public Block getBlock(ByteBuffer fileBf, int keySize, int valSize, int offset, long expiredTime) {
+    public Block getBlock(ByteBuffer fileBf, int keySize, int valSize, int offset, long expiredTime,byte isCompress) {
         byte[] key = new byte[keySize];//获取到key 的 offset
         fileBf.get(key);
 
@@ -32,6 +32,7 @@ public class EmptyValueBlockReader implements BlockReader {
         }
         Block b = new Block();
         b.expiredTime = expiredTime;
+        b.isCompress = isCompress;
         b.keyLen = keySize;
         b.valLen = valSize;
         b.key = new String(key);
@@ -40,7 +41,7 @@ public class EmptyValueBlockReader implements BlockReader {
     }
 
     @Override
-    public Block getBlock(DataInputStream is, int keySize, int valSize, int offset, long expiredTime) {
+    public Block getBlock(DataInputStream is, int keySize, int valSize, int offset, long expiredTime,byte isCompress) {
         byte[] key = new byte[keySize];//获取到key 的 offset
         try {
             is.read(key);
@@ -50,6 +51,7 @@ public class EmptyValueBlockReader implements BlockReader {
         }
         Block b = new Block();
         b.expiredTime = expiredTime;
+        b.isCompress = isCompress;
         b.keyLen = keySize;
         b.valLen = valSize;
         b.key = new String(key);

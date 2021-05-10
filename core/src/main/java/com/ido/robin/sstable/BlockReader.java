@@ -17,7 +17,7 @@ public interface BlockReader {
      * @param offset  the block's offset in the original file bytes content
      * @return
      */
-    Block getBlock(ByteBuffer fileBf, int keySize, int valSize, int offset, long expiredTime);
+    Block getBlock(ByteBuffer fileBf, int keySize, int valSize, int offset, long expiredTime,byte isCompress);
 
     /**
      * construct a block by reading data from input stream
@@ -28,5 +28,5 @@ public interface BlockReader {
      * @param offset  the block's offset in the original file bytes content
      * @return
      */
-    Block getBlock(DataInputStream fileBf, int keySize, int valSize, int offset, long expiredTime);
+    Block getBlock(DataInputStream fileBf, int keySize, int valSize, int offset, long expiredTime,byte isCompress);
 }

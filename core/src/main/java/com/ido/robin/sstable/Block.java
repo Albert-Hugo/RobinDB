@@ -14,6 +14,7 @@ import java.util.Objects;
 @Slf4j
 public class Block implements Comparable<Block> {
     protected static int KEY_LEN_SIZE = 8;
+    protected static int IS_COMPRESS_FLAG_SIZE = 1;
     protected static int VAL_LEN_SIZE = 8;
     protected static int EXPIRED_TIME_SIZE = 8;
     public final static long PERMANENT = -1;
@@ -23,6 +24,10 @@ public class Block implements Comparable<Block> {
      * 过期时间
      */
     long expiredTime = PERMANENT;
+    /**
+     * 是否压缩
+     */
+    byte isCompress = 0;
     long valLen;
     byte[] val;
     /**
@@ -76,10 +81,14 @@ public class Block implements Comparable<Block> {
     }
 
     public boolean isExpired() {
-        if(expiredTime == PERMANENT){
+        if (expiredTime == PERMANENT) {
             return false;
         }
         return expiredTime < System.currentTimeMillis();
+    }
+
+    private boolean isCompress() {
+        return this.isCompress == 1;
     }
 
 
@@ -95,7 +104,7 @@ public class Block implements Comparable<Block> {
     public int getBlockLength() {
         int velSize = this.getVal().length;
         int keySize = this.getKey().getBytes().length;
-        return velSize + keySize + KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE;
+        return velSize + keySize + KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE;
 
     }
 
@@ -132,14 +141,15 @@ public class Block implements Comparable<Block> {
         while (true) {
             int offset = headerLen + fileBf.position();
             long expiredTime = fileBf.getLong();
+            byte isCompress = fileBf.get();
             int keySize = (int) fileBf.getLong();
             int valSize = (int) fileBf.getLong();
             if (keySize == 0 && valSize == 0) break;
 
-            Block b = reader.getBlock(fileBf, keySize, valSize, offset, expiredTime);
+            Block b = reader.getBlock(fileBf, keySize, valSize, offset, expiredTime, isCompress);
             b.fileName = fileName;
             blocks.add(b);
-            if (fileBf.remaining() < (KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE)) {
+            if (fileBf.remaining() < (KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE)) {
                 break;
             }
         }
@@ -157,8 +167,9 @@ public class Block implements Comparable<Block> {
     public byte[] bytes() {
         int velSize = this.val.length;
         int keySize = this.key.getBytes().length;
-        ByteBuffer bf = ByteBuffer.allocate(KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + velSize + keySize);
+        ByteBuffer bf = ByteBuffer.allocate(KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE + velSize + keySize);
         bf.putLong(this.expiredTime);
+        bf.put(this.isCompress);
         bf.putLong(this.keyLen);
         bf.putLong(this.valLen);
         bf.put(this.key.getBytes());
