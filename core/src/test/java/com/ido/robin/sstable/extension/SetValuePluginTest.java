@@ -17,12 +17,13 @@ public class SetValuePluginTest {
     public void testAdd() throws IOException {
         SSTablePlus ssTable = new SSTablePlus(path);
 
-        ssTable.setAdd("ido", "1");
-        ssTable.setAdd("ido", "2");
+        ssTable.setAdd("set", "1");
+        ssTable.setAdd("set", "2");
         ssTable.flush();
-        Set result = ssTable.getSet("ido");
+        Set result = ssTable.getSet("set");
         System.out.println(result);
         Assert.assertEquals(2, result.size());
+        ssTable.close();
 
     }
 
@@ -30,12 +31,13 @@ public class SetValuePluginTest {
     public void testClear() throws IOException {
         SSTablePlus ssTable = new SSTablePlus(path);
 
-        ssTable.setAdd("ido", "1");
-        ssTable.setAdd("ido", "2");
+        ssTable.setAdd("set", "1");
+        ssTable.setAdd("set", "2");
         ssTable.flush();
-        ssTable.setClear("ido");
+        ssTable.setClear("set");
         ssTable.flush();
-        Assert.assertTrue(ssTable.getSet("ido").isEmpty());
+        Assert.assertTrue(ssTable.getSet("set").isEmpty());
+        ssTable.close();
 
     }
 
@@ -43,13 +45,14 @@ public class SetValuePluginTest {
     public void testRemove() throws IOException {
         SSTablePlus ssTable = new SSTablePlus(path);
 
-        ssTable.setAdd("ido", "1");
-        ssTable.setAdd("ido", "2");
+        ssTable.setAdd("set", "1");
+        ssTable.setAdd("set", "2");
         ssTable.flush();
-        boolean result = ssTable.setRemove("ido", "1");
+        boolean result = ssTable.setRemove("set", "1");
         ssTable.flush();
         Assert.assertTrue(result);
-        Assert.assertFalse(ssTable.getSet("ido").contains("1"));
+        Assert.assertFalse(ssTable.getSet("set").contains("1"));
+        ssTable.close();
 
     }
 }

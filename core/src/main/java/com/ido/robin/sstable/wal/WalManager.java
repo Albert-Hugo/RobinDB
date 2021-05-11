@@ -42,6 +42,20 @@ public class WalManager {
         this.recoverySavePoint = lastEntryId;
     }
 
+    public void shutdown() {
+        if (this.autoSnapshotTask != null) {
+            this.autoSnapshotTask.interrupt();
+        }
+
+        this.walDataFiles.forEach(e-> {
+            try {
+                e.close();
+            } catch (IOException e1) {
+                log.error(e1.getMessage(),e1);
+            }
+        });
+    }
+
     private class AutoSnapshotTask extends AbstractFileTask {
 
         public AutoSnapshotTask(String path, int period, TimeUnit timeUnit) {
@@ -114,7 +128,7 @@ public class WalManager {
             //清除掉所有旧的废弃日志
             clearOldFile(newDataFile);
             newDataFile.batchAppend(toSave);
-            synchronized (this.walDataFiles){
+            synchronized (this.walDataFiles) {
                 this.walDataFiles.add(newDataFile);
             }
         } catch (IOException e) {
@@ -125,7 +139,7 @@ public class WalManager {
     }
 
     private void clearOldFile(WalDataFile newDataFile) throws IOException {
-        synchronized (this.walDataFiles){
+        synchronized (this.walDataFiles) {
 
             for (WalDataFile walDataFile : this.walDataFiles) {
                 walDataFile.close();
@@ -159,19 +173,19 @@ public class WalManager {
     public void takeSnapshot() throws IOException {
         //从wal 文件中遍历，出所有命令，然后合并成新的snapshot
         List<WalLogData> logData = listWalDatas((WalLogData a1, WalLogData a2) -> {
-            if(a1 == null && a2 == null){
+            if (a1 == null && a2 == null) {
                 return 0;
             }
-            if(a1 == null){
+            if (a1 == null) {
                 return 1;
             }
 
-            if(a2 == null){
+            if (a2 == null) {
                 return -1;
             }
-            if(a2.getSequence() - a1.getSequence() >0 ){
+            if (a2.getSequence() - a1.getSequence() > 0) {
                 return 1;
-            }else if(a2.getSequence() - a1.getSequence() <0){
+            } else if (a2.getSequence() - a1.getSequence() < 0) {
                 return -1;
             }
 
@@ -240,7 +254,7 @@ public class WalManager {
 
     public WalManager(String path) {
         this.path = path;
-        synchronized (this.walDataFiles){
+        synchronized (this.walDataFiles) {
 
             try {
                 this.walDataFiles = Files.list(Paths.get(this.path))
@@ -293,7 +307,7 @@ public class WalManager {
      * @return
      */
     private WalDataFile getCurrentWalFile() {
-        synchronized (this.walDataFiles){
+        synchronized (this.walDataFiles) {
             if (this.walDataFiles.size() == 1) {
                 return this.walDataFiles.get(0);
             }

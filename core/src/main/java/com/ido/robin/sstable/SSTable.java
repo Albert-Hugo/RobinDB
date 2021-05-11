@@ -358,6 +358,7 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
     public void close() throws IOException {
         flush();
         this.fileManager.shutdown();
+        this.walManager.shutdown();
         log.info("SSTable shutdown successfully.");
     }
 

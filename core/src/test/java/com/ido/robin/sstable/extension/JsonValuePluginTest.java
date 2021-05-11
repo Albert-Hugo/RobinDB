@@ -44,9 +44,9 @@ public class JsonValuePluginTest {
         SSTablePlus ssTablePlus = new SSTablePlus(path);
         Person  p = new Person();
         p.setName("a");
-        ssTablePlus.putObject("fs",p);
+        ssTablePlus.putObject("Person",p);
 //
-        Person pp = ssTablePlus.getObject("fs");
+        Person pp = ssTablePlus.getObject("Person");
 
         Assert.assertEquals("a", pp.getName());
     }
