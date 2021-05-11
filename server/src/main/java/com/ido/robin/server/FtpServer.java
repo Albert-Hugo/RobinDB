@@ -22,7 +22,7 @@ import java.net.UnknownHostException;
  * @date 2019/1/18 11:10
  */
 @Slf4j
-public class ServerStarter implements Server {
+public class FtpServer implements Server {
     private String name;
     private int port;
     private String host;

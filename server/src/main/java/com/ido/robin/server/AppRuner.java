@@ -16,7 +16,7 @@ public class AppRuner {
         int rp = Integer.getInteger("remote.port", 8688);
         executorService.execute(() -> {
             try {
-                new ServerStarter().start(rp);
+                new FtpServer().start(rp);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
