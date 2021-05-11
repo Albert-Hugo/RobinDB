@@ -14,7 +14,9 @@ public class KeyValue {
     public KeyValue(String key, String val, long expiredTime) {
         this.key = key;
         this.val = val;
-        this.expiredTime = System.currentTimeMillis()+expiredTime;
+        if (expiredTime != Block.PERMANENT) {
+            this.expiredTime = System.currentTimeMillis() + expiredTime;
+        }
     }
 
     public KeyValue(String key, String val) {
