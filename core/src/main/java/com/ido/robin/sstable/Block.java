@@ -23,7 +23,7 @@ public class Block implements Comparable<Block> {
     /**
      * 超过指定字节数的val ，自动压缩
      */
-    public final static int COMPRESS_BYTE_THRESHOLD = 1024;
+    public final static int COMPRESS_BYTE_THRESHOLD = Integer.valueOf(System.getProperty("compress.byte.threshold", "1024"));
     /**
      * 标志值，表示已压缩
      */
@@ -117,7 +117,18 @@ public class Block implements Comparable<Block> {
 
 
     public int getBlockLength() {
-        int velSize = this.getVal().length;
+        int velSize = 0;
+        if (needCompress()) {
+            try {
+                byte[] compressData = CompressUtil.compress(this.getVal());
+                velSize = compressData.length;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+
+            velSize = this.getVal().length;
+        }
         int keySize = this.getKey().getBytes().length;
         return velSize + keySize + KEY_LEN_SIZE + VAL_LEN_SIZE + EXPIRED_TIME_SIZE + IS_COMPRESS_FLAG_SIZE;
 
