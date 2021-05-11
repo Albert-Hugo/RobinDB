@@ -114,7 +114,9 @@ public class WalManager {
             //清除掉所有旧的废弃日志
             clearOldFile(newDataFile);
             newDataFile.batchAppend(toSave);
-            this.walDataFiles.add(newDataFile);
+            synchronized (this.walDataFiles){
+                this.walDataFiles.add(newDataFile);
+            }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
@@ -123,23 +125,26 @@ public class WalManager {
     }
 
     private void clearOldFile(WalDataFile newDataFile) throws IOException {
-        for (WalDataFile walDataFile : this.walDataFiles) {
-            walDataFile.close();
-        }
-        this.walDataFiles.clear();
-        this.walDataFiles.add(newDataFile);
-        List<File> oldFiles = Files.list(Paths.get(this.path))
-                .filter(p -> p.toFile().getName().endsWith(WalDataFile.WAL_FILE_PREFIX))
-                .map(Path::toFile)
-                .filter(Objects::nonNull)
-                .filter(f -> !f.getName().equals(newDataFile.getFileName()))
-                .collect(Collectors.toList());
+        synchronized (this.walDataFiles){
 
-        for (File f : oldFiles) {
-            try {
-                java.nio.file.Files.delete(f.toPath());
-            } catch (IOException ex) {
-                log.error(ex.getMessage(), ex);
+            for (WalDataFile walDataFile : this.walDataFiles) {
+                walDataFile.close();
+            }
+            this.walDataFiles.clear();
+            this.walDataFiles.add(newDataFile);
+            List<File> oldFiles = Files.list(Paths.get(this.path))
+                    .filter(p -> p.toFile().getName().endsWith(WalDataFile.WAL_FILE_PREFIX))
+                    .map(Path::toFile)
+                    .filter(Objects::nonNull)
+                    .filter(f -> !f.getName().equals(newDataFile.getFileName()))
+                    .collect(Collectors.toList());
+
+            for (File f : oldFiles) {
+                try {
+                    java.nio.file.Files.delete(f.toPath());
+                } catch (IOException ex) {
+                    log.error(ex.getMessage(), ex);
+                }
             }
         }
     }
@@ -235,38 +240,40 @@ public class WalManager {
 
     public WalManager(String path) {
         this.path = path;
+        synchronized (this.walDataFiles){
 
-        try {
-            this.walDataFiles = Files.list(Paths.get(this.path))
-                    .filter(p -> p.toFile().getName().endsWith(WalDataFile.WAL_FILE_PREFIX))
-                    .map(Path::toFile)
-                    .map(f -> {
-                        try {
-                            return new WalDataFile(f);
-                        } catch (IOException e) {
-                            log.error(e.getMessage(), e);
-                        }
-                        return null;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-
-        if (walDataFiles.isEmpty()) {
             try {
-                walDataFiles.add(new WalDataFile(newWalDataFileName()));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                this.walDataFiles = Files.list(Paths.get(this.path))
+                        .filter(p -> p.toFile().getName().endsWith(WalDataFile.WAL_FILE_PREFIX))
+                        .map(Path::toFile)
+                        .map(f -> {
+                            try {
+                                return new WalDataFile(f);
+                            } catch (IOException e) {
+                                log.error(e.getMessage(), e);
+                            }
+                            return null;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
             }
+
+            if (walDataFiles.isEmpty()) {
+                try {
+                    walDataFiles.add(new WalDataFile(newWalDataFileName()));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+            //set up auto snapshot task
+            autoSnapshotTask = new Thread(new AutoSnapshotTask(this.path, 60, TimeUnit.SECONDS));
+            autoSnapshotTask.setDaemon(true);
+            autoSnapshotTask.start();
         }
-
-
-        //set up auto snapshot task
-        autoSnapshotTask = new Thread(new AutoSnapshotTask(this.path, 60, TimeUnit.SECONDS));
-        autoSnapshotTask.setDaemon(true);
-        autoSnapshotTask.start();
 
 
         log.debug(walDataFiles.size() + "");
@@ -286,12 +293,14 @@ public class WalManager {
      * @return
      */
     private WalDataFile getCurrentWalFile() {
-        if (this.walDataFiles.size() == 1) {
+        synchronized (this.walDataFiles){
+            if (this.walDataFiles.size() == 1) {
+                return this.walDataFiles.get(0);
+            }
+            // 根据文件名的sequence编号来获取最新的文件
+            this.walDataFiles.sort(new WalDataFile.FileNameComparator());
             return this.walDataFiles.get(0);
         }
-        // 根据文件名的sequence编号来获取最新的文件
-        this.walDataFiles.sort(new WalDataFile.FileNameComparator());
-        return this.walDataFiles.get(0);
     }
 
     public List<WalLogData> listWalDatas() {
