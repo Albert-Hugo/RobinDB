@@ -2,6 +2,7 @@ package com.ido.robin.sstable;
 
 import com.ido.robin.common.CompressUtil;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,6 +13,12 @@ import java.nio.ByteBuffer;
  * @date 2020/12/22 18:32
  */
 public class EmptyValueBlockReaderTest {
+
+
+    @Before
+    public void setup(){
+        System.setProperty("compress.byte.threshold","5");
+    }
 
     @Test
     public void test(){
@@ -51,6 +58,7 @@ public class EmptyValueBlockReaderTest {
 
     @Test
     public void testWholeValueWithCompress() throws IOException {
+
         String val = "1DAFADDSADADADAF2";
         Block b = new Block("1",val.getBytes());
         byte[] comprssData = CompressUtil.compress(val.getBytes());

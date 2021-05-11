@@ -24,7 +24,7 @@ public class SSTableTest {
     private Random random = new Random();
     private String path = "D:\\robin-data\\";
 
-//        @Before
+        @Before
     public void setup() throws IOException {
         SSTable ssTable = new SSTable(path);
         for (int i = 0; i < 10; i++) {
@@ -107,7 +107,7 @@ public class SSTableTest {
 //        SSTablePlus ssTable = new SSTablePlus(path);
 //        ssTable.put("1","dada",10 * 1000);
 //        System.out.println(ssTable.get("1"));;
-        int count = 100;
+        int count = 10;
         int threadN = 5;
         CountDownLatch countDownLatch = new CountDownLatch(threadN);
         SSTablePlus ssTable = new SSTablePlus(path);
@@ -154,7 +154,7 @@ public class SSTableTest {
 
     @Test
     public void testAutoFlushPut() throws IOException, InterruptedException {
-        int count = 100;
+        int count = 10;
         int threadN = 1;
         CountDownLatch countDownLatch = new CountDownLatch(threadN);
         SSTable ssTable = new SSTable(path, true);

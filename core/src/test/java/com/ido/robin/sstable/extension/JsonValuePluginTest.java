@@ -16,7 +16,7 @@ import java.util.Set;
  * @date 2020/12/22 16:57
  */
 public class JsonValuePluginTest {
-    private static String path = "D:\\生产已经存在的服务评价\\";
+    private static String path = "D:\\robin-data";
 
 
     public static class Person {
@@ -42,24 +42,12 @@ public class JsonValuePluginTest {
     @Test
     public void testPutObject() throws IOException {
         SSTablePlus ssTablePlus = new SSTablePlus(path);
+        Person  p = new Person();
+        p.setName("a");
+        ssTablePlus.putObject("fs",p);
 //
-//        ssTablePlus.putObject("person", new Person("123"));
-//        Set<Person> personSet = Sets.newHashSet(new Person("123"));
-//        ssTablePlus.putObject("list", Arrays.asList("123","2314"));
-//        ssTablePlus.putObject("set", personSet);
-//        Map m  = Maps.newHashMap();
-//        m.put("test","fsf");
-//        ssTablePlus.putObject("map", m);
-//
-//        ssTablePlus.flush();
-//        Person p = ssTablePlus.getObject("person");
-//        List list = ssTablePlus.getObject("list");
-        Set set = ssTablePlus.getObject("salesOrder");
-//        Map map = ssTablePlus.getObject("map");
+        Person pp = ssTablePlus.getObject("fs");
 
-//        Assert.assertEquals("123", p.name);
-//        Assert.assertEquals(2, list.size());
-        Assert.assertEquals(2, set.size());
-//        Assert.assertEquals("fsf", map.get("test"));
+        Assert.assertEquals("a", pp.getName());
     }
 }
