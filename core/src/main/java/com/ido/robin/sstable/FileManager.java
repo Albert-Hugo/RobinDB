@@ -3,6 +3,7 @@ package com.ido.robin.sstable;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,7 +25,7 @@ import static com.ido.robin.sstable.SegmentFile.SEGMENT_FILE_SUFFIX;
 @Slf4j
 public class FileManager {
     private FileSplitor fileSplitor;
-    private Set<SegmentFileChangeListener> listeners;
+    private Set<WeakReference<SegmentFileChangeListener>> listeners;
     private List<SegmentFile> segmentFiles;
 
     static final ReentrantReadWriteLock reentrantLock = new ReentrantReadWriteLock();
@@ -79,6 +80,11 @@ public class FileManager {
         this.autoFlushCmdsSize = autoFlushCmdsSize;
     }
 
+    Set<WeakReference<SegmentFileChangeListener>> getListeners() {
+        return listeners;
+    }
+
+
     /**
      * 监听当前目录下的所有segment 文件,自动拆分
      *
@@ -127,13 +133,8 @@ public class FileManager {
         if (listeners == null) {
             listeners = new HashSet<>();
         }
-
-        if (listeners.contains(listener)) {
-            listeners.remove(listener);
-            listeners.add(listener);
-        }else{
-            listeners.add(listener);
-        }
+        WeakReference<SegmentFileChangeListener> l = new WeakReference<>(listener);
+        listeners.add(l);
     }
 
     public List<SegmentFile> getSegmentFiles() {
@@ -146,8 +147,13 @@ public class FileManager {
     }
 
     private void notifySegmentFileChange(List<SegmentFile> segmentFiles, List<String> changedSgFiles) {
-        listeners.forEach(l -> {
-            l.onChange(segmentFiles, changedSgFiles);
+        listeners = listeners.stream().filter(r->r.get()!=null).collect(Collectors.toSet());
+        listeners.stream().forEach(l -> {
+            SegmentFileChangeListener listener = l.get();
+            if (listener != null) {
+                listener.onChange(segmentFiles, changedSgFiles);
+            }
+
         });
 
     }
@@ -260,7 +266,7 @@ public class FileManager {
 
 
     class AutoFlushTask extends AbstractFileTask {
-        int size =autoFlushCmdsSize;
+        int size = autoFlushCmdsSize;
 
         AutoFlushTask(String path, int period, TimeUnit timeUnit) {
             super(path, period, timeUnit);
