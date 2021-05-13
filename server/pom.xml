@@ -5,7 +5,7 @@
     <parent>
         <artifactId>RobinDB</artifactId>
         <groupId>com.ido.robin</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1-RELEASE</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -41,18 +41,18 @@
         <dependency>
             <groupId>com.ido.robin</groupId>
             <artifactId>rpc</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>com.ido.robin</groupId>
             <artifactId>core</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.ido.robin</groupId>
             <artifactId>client</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
     </dependencies>
 

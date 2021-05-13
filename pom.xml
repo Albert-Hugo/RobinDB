@@ -7,7 +7,7 @@
     <groupId>com.ido.robin</groupId>
     <artifactId>RobinDB</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1-RELEASE</version>
     <modules>
         <module>rpc</module>
         <module>core</module>
