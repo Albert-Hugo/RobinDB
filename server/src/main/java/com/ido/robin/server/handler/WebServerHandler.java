@@ -67,33 +67,13 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
             final String deleteCmd = "/delete/";
             final String putCmd = "/put";
             if ("GET".equals(request.method().name()) && request.uri().startsWith(getCmd)) {
-                int i = request.uri().indexOf(getCmd);
-                String k = request.uri().substring(i + getCmd.length());
-                String val = SSTableManager.getInstance().get(k);
-                if (val == null) {
-                    return buildHttpRsp("");
-                } else {
-                    return buildHttpRsp(val);
-                }
+                return handleGetRequest(request, getCmd);
 
             } else if ("DELETE".equals(request.method().name()) && request.uri().startsWith(deleteCmd)) {
-                int i = request.uri().indexOf(deleteCmd);
-                String k = request.uri().substring(i + deleteCmd.length());
-                SSTableManager.getInstance().remove(k);
-                return buildHttpRsp("ok");
+                return handleDeleteRequest(request, deleteCmd);
 
             } else if ("POST".equals(request.method().name()) && request.uri().startsWith(putCmd)) {
-                byte[] data = new byte[request.content().readableBytes()];
-                try {
-                    request.content().readBytes(data);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                PutCmd cmd = GSON.fromJson(new String(data), PutCmd.class);
-                log.info("put key :{},val :{}",cmd.key,cmd.val);
-                SSTableManager.getInstance().put(cmd.key, cmd.val);
-                return buildHttpRsp("ok");
+                return handlePutRequest(request);
             }
             ByteBuf byteBuf = Unpooled.wrappedBuffer("".getBytes());
             HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, byteBuf);
@@ -108,10 +88,44 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
 
     }
 
+    private HttpResponse handlePutRequest(FullHttpRequest request) {
+        byte[] data = new byte[request.content().readableBytes()];
+        try {
+            request.content().readBytes(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        PutCmd cmd = GSON.fromJson(new String(data), PutCmd.class);
+        log.info("put key :{},val :{}",cmd.key,cmd.val);
+        SSTableManager.getInstance().put(cmd.key, cmd.val);
+        return buildHttpRsp("ok");
+    }
+
+    private HttpResponse handleDeleteRequest(FullHttpRequest request, String deleteCmd) {
+        int i = request.uri().indexOf(deleteCmd);
+        String k = request.uri().substring(i + deleteCmd.length());
+        SSTableManager.getInstance().remove(k);
+        return buildHttpRsp("ok");
+    }
+
+    private HttpResponse handleGetRequest(FullHttpRequest request, String getCmd) {
+        int i = request.uri().indexOf(getCmd);
+        String k = request.uri().substring(i + getCmd.length());
+        String val = SSTableManager.getInstance().get(k);
+        if (val == null) {
+            return buildHttpRsp("");
+        } else {
+            return buildHttpRsp(val);
+        }
+    }
+
     private HttpResponse buildHttpRsp(String content) {
         ByteBuf byteBuf = Unpooled.wrappedBuffer(content.getBytes());
         HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);
         response.headers().add("content-length", content.getBytes().length);
+        //todo only for debug
+        response.headers().add("Access-Control-Allow-Origin", "*");
         return response;
     }
 
