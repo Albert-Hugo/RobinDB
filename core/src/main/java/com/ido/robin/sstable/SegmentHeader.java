@@ -45,6 +45,10 @@ public class SegmentHeader {
     long segmentFileNameLen;
     String segmentFileName;
 
+    public String getSegmentFileName() {
+        return segmentFileName;
+    }
+
     public boolean isKeyBetweenFile(String key) {
         if(this.fileLen == 0) return false;
         return key.compareTo(keyStart) >= 0 && key.compareTo(keyEnd) <= 0;

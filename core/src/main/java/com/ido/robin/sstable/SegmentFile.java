@@ -6,9 +6,20 @@ import com.google.common.cache.LoadingCache;
 import com.ido.robin.common.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -167,7 +178,7 @@ public class SegmentFile implements Closeable, SortableFileName {
 
     }
 
-    SegmentHeader getHeader() {
+    public SegmentHeader getHeader() {
         return this.header;
     }
 

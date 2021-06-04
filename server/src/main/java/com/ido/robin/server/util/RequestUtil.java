@@ -1,7 +1,6 @@
 package com.ido.robin.server.util;
 
 import com.google.gson.Gson;
-import com.ido.robin.sstable.KeyValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -62,7 +61,7 @@ public class RequestUtil {
                 Object rsult = clx.newInstance();
                 for (KeyValua kv : kvs) {
                     clx.getDeclaredField(kv.key).setAccessible(true);
-                    clx.getDeclaredField("key").set(rsult, kv.val);
+                    clx.getDeclaredField(kv.key).set(rsult, kv.val);
                 }
                 return (T) rsult;
             } catch (InstantiationException e) {

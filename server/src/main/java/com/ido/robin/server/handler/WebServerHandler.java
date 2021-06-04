@@ -1,6 +1,7 @@
 package com.ido.robin.server.handler;
 
 import com.ido.robin.server.controller.GetKeyController;
+import com.ido.robin.server.controller.KeysDetailController;
 import com.ido.robin.server.controller.NotFoundController;
 import com.ido.robin.server.controller.PutKeyController;
 import com.ido.robin.server.controller.RemoveKeyController;
@@ -33,6 +34,7 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
         handlersMapping.put("/delete", new RemoveKeyController());
         handlersMapping.put("/put", new PutKeyController());
         handlersMapping.put("/state", new StateController());
+        handlersMapping.put("/file-keys-detail", new KeysDetailController());
     }
 
 
@@ -60,15 +62,6 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
     }
 
 
-    static class PutCmd {
-        String key;
-        String val;
-
-        public PutCmd(String key, String val) {
-            this.key = key;
-            this.val = val;
-        }
-    }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
         log.info(request.uri());
