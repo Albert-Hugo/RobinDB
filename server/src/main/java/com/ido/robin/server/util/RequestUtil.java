@@ -101,6 +101,16 @@ public class RequestUtil {
         return result;
     }
 
+    public static HttpResponse buildJsonRsp(Object data) {
+        String content = GSON.toJson(data);
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(content.getBytes());
+        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);
+        response.headers().add("content-length", content.getBytes().length);
+        response.headers().add("content-type", "application/json");
+        //todo only for debug
+        response.headers().add("Access-Control-Allow-Origin", "*");
+        return response;
+    }
 
     public static HttpResponse buildHttpRsp(String content) {
         ByteBuf byteBuf = Unpooled.wrappedBuffer(content.getBytes());
