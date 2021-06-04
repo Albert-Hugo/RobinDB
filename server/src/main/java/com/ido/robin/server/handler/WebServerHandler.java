@@ -2,17 +2,30 @@ package com.ido.robin.server.handler;
 
 import com.google.gson.Gson;
 import com.ido.robin.server.SSTableManager;
+import com.ido.robin.server.controller.GetKeyController;
+import com.ido.robin.server.controller.NotFoundController;
+import com.ido.robin.server.controller.PutKeyController;
+import com.ido.robin.server.controller.RemoveKeyController;
+import com.ido.robin.server.controller.RequestController;
+import com.ido.robin.server.util.RequestUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -24,6 +37,14 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class WebServerHandler extends ChannelInboundHandlerAdapter {
     private final static Gson GSON = new Gson();
+    private static Map<String, RequestController> handlersMapping = new HashMap<>();
+    private final NotFoundController notFoundController = new NotFoundController();
+
+    static {
+        handlersMapping.put("/get", new GetKeyController());
+        handlersMapping.put("/delete", new RemoveKeyController());
+        handlersMapping.put("/put", new PutKeyController());
+    }
 
 
     @Override
@@ -62,23 +83,15 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
         log.info(request.uri());
+
         CompletableFuture fsRsp = CompletableFuture.supplyAsync(() -> {
-            final String getCmd = "/get/";
-            final String deleteCmd = "/delete/";
-            final String putCmd = "/put";
-            if ("GET".equals(request.method().name()) && request.uri().startsWith(getCmd)) {
-                return handleGetRequest(request, getCmd);
-
-            } else if ("DELETE".equals(request.method().name()) && request.uri().startsWith(deleteCmd)) {
-                return handleDeleteRequest(request, deleteCmd);
-
-            } else if ("POST".equals(request.method().name()) && request.uri().startsWith(putCmd)) {
-                return handlePutRequest(request);
+            String route = RequestUtil.getRequestRoute(request);
+            RequestController controller = handlersMapping.get(route);
+            if (controller != null) {
+                return controller.handleRequest(request);
             }
-            ByteBuf byteBuf = Unpooled.wrappedBuffer("".getBytes());
-            HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, byteBuf);
-            response.headers().add("content-length", 0);
-            return response;
+
+            return notFoundController.handleRequest(request);
         }, Executors.newFixedThreadPool(100));
 
         fsRsp.thenAcceptAsync((response) -> {
@@ -87,6 +100,7 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
         });
 
     }
+
 
     private HttpResponse handlePutRequest(FullHttpRequest request) {
         byte[] data = new byte[request.content().readableBytes()];
@@ -97,7 +111,7 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
         }
 
         PutCmd cmd = GSON.fromJson(new String(data), PutCmd.class);
-        log.info("put key :{},val :{}",cmd.key,cmd.val);
+        log.info("put key :{},val :{}", cmd.key, cmd.val);
         SSTableManager.getInstance().put(cmd.key, cmd.val);
         return buildHttpRsp("ok");
     }
