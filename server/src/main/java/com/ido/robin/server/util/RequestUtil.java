@@ -9,6 +9,8 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,9 +55,17 @@ public class RequestUtil {
 
 
     public static <T> T extractRequestParams(FullHttpRequest httpRequest, Class<T> clx) {
-        if (httpRequest.method().name().toLowerCase().equals("get") || httpRequest.method().name().toLowerCase().equals("delete")) {
+        if ("OPTIONS".equals(httpRequest.method().name())) {
+            return null;
+        }
+        if (httpRequest.method().name().toLowerCase().equals("get")) {
             //url request data
             String keyValuePairs = getUrlRequestParams(httpRequest);
+            try {
+                keyValuePairs = URLDecoder.decode(keyValuePairs, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
             List<KeyValua> kvs = toKvs(keyValuePairs);
             try {
                 Object rsult = clx.newInstance();
@@ -108,6 +118,8 @@ public class RequestUtil {
         response.headers().add("content-type", "application/json");
         //todo only for debug
         response.headers().add("Access-Control-Allow-Origin", "*");
+        response.headers().add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+        response.headers().add("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
         return response;
     }
 
@@ -117,6 +129,8 @@ public class RequestUtil {
         response.headers().add("content-length", content.getBytes().length);
         //todo only for debug
         response.headers().add("Access-Control-Allow-Origin", "*");
+        response.headers().add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+        response.headers().add("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
         return response;
     }
 

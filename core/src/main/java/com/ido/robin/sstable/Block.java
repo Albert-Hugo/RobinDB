@@ -102,6 +102,10 @@ public class Block implements Comparable<Block> {
         return expiredTime < System.currentTimeMillis();
     }
 
+    public long getExpiredTime() {
+        return expiredTime;
+    }
+
     public boolean needCompress() {
         return this.valLen > COMPRESS_BYTE_THRESHOLD;
     }
