@@ -15,7 +15,7 @@ public class RemoveKeyController implements RequestController {
     }
 
     @Override
-    public HttpResponse handleRequest(FullHttpRequest request) {
+    public HttpResponse handleInner(FullHttpRequest request) {
         RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
 
         SSTableManager.getInstance().remove(cmd.key);

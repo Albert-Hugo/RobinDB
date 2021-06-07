@@ -25,7 +25,7 @@ public class PutKeyController implements RequestController {
 
 
     @Override
-    public HttpResponse handleRequest(FullHttpRequest request) {
+    public HttpResponse handleInner(FullHttpRequest request) {
         PutKeyController.PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
         log.info("put key :{},val :{}", cmd.key, cmd.val);
         SSTableManager.getInstance().put(cmd.key, cmd.val);

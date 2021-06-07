@@ -13,7 +13,7 @@ import io.netty.handler.codec.http.HttpResponse;
 public class StateController implements RequestController {
 
     @Override
-    public HttpResponse handleRequest(FullHttpRequest request) {
+    public HttpResponse handleInner(FullHttpRequest request) {
         SSTable.State val = SSTableManager.getInstance().getState();
         if (val == null) {
             return RequestUtil.buildHttpRsp("");

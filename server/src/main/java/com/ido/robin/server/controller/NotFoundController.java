@@ -14,7 +14,7 @@ import io.netty.handler.codec.http.HttpVersion;
  */
 public class NotFoundController implements RequestController {
     @Override
-    public HttpResponse handleRequest(FullHttpRequest request) {
+    public HttpResponse handleInner(FullHttpRequest request) {
         ByteBuf byteBuf = Unpooled.wrappedBuffer("".getBytes());
         HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, byteBuf);
         response.headers().add("content-length", 0);

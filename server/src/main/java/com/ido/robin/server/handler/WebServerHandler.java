@@ -70,10 +70,10 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
             String route = RequestUtil.getRequestRoute(request);
             RequestController controller = handlersMapping.get(route);
             if (controller != null) {
-                return controller.handleRequest(request);
+                return controller.handle(request);
             }
 
-            return notFoundController.handleRequest(request);
+            return notFoundController.handle(request);
         }, Executors.newFixedThreadPool(100));
 
         fsRsp.thenAcceptAsync((response) -> {

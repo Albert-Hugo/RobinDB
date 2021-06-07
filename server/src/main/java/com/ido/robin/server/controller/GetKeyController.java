@@ -15,7 +15,7 @@ public class GetKeyController implements RequestController {
     }
 
     @Override
-    public HttpResponse handleRequest(FullHttpRequest request) {
+    public HttpResponse handleInner(FullHttpRequest request) {
         GetCmd getCmd = RequestUtil.extractRequestParams(request, GetCmd.class);
         String val = SSTableManager.getInstance().get(getCmd.key);
         if (val == null) {
