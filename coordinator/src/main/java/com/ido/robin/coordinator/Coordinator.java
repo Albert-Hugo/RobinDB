@@ -28,6 +28,11 @@ public class Coordinator {
 
     }
 
+
+    public List<DistributedServer> getServers() {
+        return this.servers;
+    }
+
     /**
      * 根据key 获取指定的server
      *

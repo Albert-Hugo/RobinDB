@@ -2,29 +2,31 @@ package com.ido.robin.coordinator.netty;
 
 import com.google.gson.Gson;
 import com.ido.robin.coordinator.Coordinator;
+import com.ido.robin.coordinator.DistributedServer;
 import com.ido.robin.coordinator.DistributedWebServer;
+import com.ido.robin.coordinator.dto.NodeInfo;
 import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.GetCmd;
 import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
 import com.ido.robin.server.controller.dto.RemoveCmd;
 import com.ido.robin.server.util.RequestUtil;
+import com.ido.robin.sstable.dto.State;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Ido
@@ -103,20 +105,20 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(getCmd.key);
                 //send request to remote server and return the response
 
-                return buildHttpRsp(new String(targetServer.get(request.uri())));
+                return RequestUtil.buildHttpRsp(new String(targetServer.get(request.uri())));
 
             } else if (route.equals(Route.DELETE)) {
                 RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
                 //send request to remote server and return the response
-                return buildHttpRsp(new String(targetServer.delete(request.uri())));
+                return RequestUtil.buildHttpRsp(new String(targetServer.delete(request.uri())));
 
             } else if (route.equals(Route.PUT)) {
                 PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
                 String d = GSON.toJson(cmd);
                 targetServer.put(d.getBytes());
-                return buildHttpRsp("ok");
+                return RequestUtil.buildHttpRsp("ok");
             } else if (route.equals(Route.FILE_KEYS_DETAIL)) {
                 GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
                 //todo 获取 file 中的 start key 定位 server；
@@ -124,13 +126,32 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(key);
                 String d = GSON.toJson(cmd);
                 targetServer.put(d.getBytes());
-                return buildHttpRsp("ok");
+                return RequestUtil.buildHttpRsp("ok");
+            } else if (route.equals(Route.STATE)) {
+                List<DistributedServer> serverList = coordinator.getServers();
+                List<State> states = serverList.stream().map(a -> {
+                    DistributedWebServer s = (DistributedWebServer) a;
+                    return s.state();
+                }).collect(Collectors.toList());
+
+                return RequestUtil.buildJsonRsp(states);
+            } else if (route.equals(Route.NODES_INFO)) {
+                List<DistributedServer> serverList = coordinator.getServers();
+                List<NodeInfo> nodeInfos = serverList.stream().map(a -> {
+                    NodeInfo nodeInfo = new NodeInfo();
+                    nodeInfo.healthy = a.healthy();
+                    nodeInfo.host = a.host();
+                    nodeInfo.port = a.port();
+                    return nodeInfo;
+                }).collect(Collectors.toList());
+
+                return RequestUtil.buildJsonRsp(nodeInfos);
             } else if (request.uri().startsWith(removeNodeCmd)) {
                 byte[] data = getRequestData(request);
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
 
                 coordinator.removeNode(cmd.host, cmd.port);
-                return buildHttpRsp("ok");
+                return RequestUtil.buildHttpRsp("ok");
             } else if (request.method().name().equals("POST") && request.uri().startsWith(addNodeCmd)) {
                 byte[] data = getRequestData(request);
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
@@ -138,7 +159,7 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 coordinator.addNode(new DistributedWebServer("default", cmd.host, cmd.port, cmd.httpPort));
             }
 
-            return buildHttpRsp("ok");
+            return RequestUtil.buildHttpRsp("ok");
         });
 
         fsRsp.thenAcceptAsync((response) -> {
@@ -158,13 +179,6 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
             return null;
         }
         return data;
-    }
-
-    private HttpResponse buildHttpRsp(String content) {
-        ByteBuf byteBuf = Unpooled.wrappedBuffer(content.getBytes());
-        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);
-        response.headers().add("content-length", content.getBytes().length);
-        return response;
     }
 
 

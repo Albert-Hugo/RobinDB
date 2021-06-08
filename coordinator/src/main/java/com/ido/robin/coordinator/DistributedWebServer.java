@@ -1,6 +1,9 @@
 package com.ido.robin.coordinator;
 
 import com.ido.robin.common.HttpUtil;
+import com.ido.robin.common.JsonUtil;
+import com.ido.robin.server.constant.Route;
+import com.ido.robin.sstable.dto.State;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -46,6 +49,13 @@ public class DistributedWebServer implements DistributedServer {
 
     }
 
+    public State state() {
+        //send request to remote server and return the response
+        byte[] bs = HttpUtil.get(makeUrl(Route.STATE), null);
+        return JsonUtil.fromJson(new String(bs), State.class);
+
+    }
+
     String makeUrl(String path) {
         return "http://" + host + ":" + httpPort + "/" + path;
     }
@@ -81,6 +91,12 @@ public class DistributedWebServer implements DistributedServer {
     @Override
     public int getHttpPort() {
         return httpPort;
+    }
+
+    @Override
+    public boolean healthy() {
+        //todo 检测 node 的健康信息
+        return true;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.ido.robin.sstable;
 
+import com.ido.robin.sstable.dto.Meta;
+import com.ido.robin.sstable.dto.State;
 import com.ido.robin.sstable.wal.Cmd;
 import com.ido.robin.sstable.wal.WalLogData;
 import com.ido.robin.sstable.wal.WalManager;
@@ -11,7 +13,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,9 +60,9 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
         this(path, false);
     }
 
-    private static String getPath(String path){
-        if(path.startsWith(".")){
-            path =System.getProperty("user.dir")+ path.substring(1);
+    private static String getPath(String path) {
+        if (path.startsWith(".")) {
+            path = System.getProperty("user.dir") + path.substring(1);
 
         }
 
@@ -409,57 +417,6 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
     }
 
 
-    public static class State {
-        List<Meta> metas;
-        private String path;
-        private long dataSize;
-        private int fileCount;
-
-        public List<Meta> getMetas() {
-            return metas;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public long getDataSize() {
-            return dataSize;
-        }
-
-        public int getFileCount() {
-            return fileCount;
-        }
-
-        @Override
-        public String toString() {
-            return "State{" +
-                    "metas=" + metas +
-                    ", path='" + path + '\'' +
-                    ", dataSize=" + dataSize +
-                    ", fileCount=" + fileCount +
-                    '}';
-        }
-    }
-
-    private static class Meta {
-        SegmentHeader metadata;
-        String filename;
-
-        public Meta(SegmentHeader metadata, String filename) {
-            this.metadata = metadata;
-            this.filename = filename;
-        }
-
-        @Override
-        public String toString() {
-            return "Meta{" +
-                    "metadata=" + metadata +
-                    ", filename='" + filename + '\'' +
-                    '}';
-        }
-    }
-
     /**
      * 获取sstable 的元信息
      *
@@ -473,10 +430,10 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
         }).collect(Collectors.toList());
 
         State state = new State();
-        state.metas = metas;
-        state.fileCount = metas.size();
-        state.path = this.path;
-        state.dataSize = metas.stream().map(s -> s.metadata.fileLen).reduce(0L, (a, b) -> a + b);
+        state.setMetas(metas);
+        state.setFileCount(metas.size());
+        state.setPath(this.path);
+        state.setDataSize(metas.stream().map(s -> s.getMetadata().fileLen).reduce(0L, (a, b) -> a + b));
         return state;
 
     }

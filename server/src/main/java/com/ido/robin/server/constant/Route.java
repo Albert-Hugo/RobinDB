@@ -9,5 +9,6 @@ public class Route {
     public final static String DELETE = "/delete";
     public final static String PUT = "/put";
     public final static String STATE = "/state";
+    public final static String NODES_INFO = "/nodes-info";
     public final static String FILE_KEYS_DETAIL = "/file-keys-detail";
 }

@@ -27,4 +27,6 @@ public interface DistributedServer extends Server, coordinable {
     }
 
     int getHttpPort();
+
+    boolean healthy();
 }
