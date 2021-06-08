@@ -62,7 +62,6 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
     }
 
 
-
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
         log.info(request.uri());
 
@@ -70,7 +69,13 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
             String route = RequestUtil.getRequestRoute(request);
             RequestController controller = handlersMapping.get(route);
             if (controller != null) {
-                return controller.handle(request);
+                try {
+
+                    return controller.handle(request);
+                } catch (Exception ex) {
+                    log.error(ex.getMessage(), ex);
+                    return (RequestController) request1 -> RequestUtil.buildHttpRsp(ex.getMessage());
+                }
             }
 
             return notFoundController.handle(request);
@@ -82,8 +87,6 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
         });
 
     }
-
-
 
 
 }

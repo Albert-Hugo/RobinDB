@@ -40,8 +40,14 @@ public class KeysDetailController implements RequestController {
         if (t.isPresent()) {
             List<Block> result = t.get().getBlockList();
             int page = Integer.valueOf(getCmd.page);
+            page = page - 1;
             int pageSize = Integer.valueOf(getCmd.pageSize);
-            result = result.subList(page * pageSize, page * pageSize + pageSize);
+            if ((page + 1) * pageSize > result.size()) {
+                int actualSize = result.size() % pageSize;
+                result = result.subList(page * pageSize, page * pageSize + actualSize);
+            } else {
+                result = result.subList(page * pageSize, page * pageSize + pageSize);
+            }
             KeyDetail keyDetail = new KeyDetail();
             keyDetail.setKeys(result.stream().map(a -> {
                 KeyValue k = new KeyValue(a.getKey(), new String(a.getVal()), a.getExpiredTime());
