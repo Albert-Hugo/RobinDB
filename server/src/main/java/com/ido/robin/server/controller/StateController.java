@@ -1,6 +1,7 @@
 package com.ido.robin.server.controller;
 
 import com.ido.robin.server.SSTableManager;
+import com.ido.robin.server.metrics.RequestCounterMetrics;
 import com.ido.robin.server.util.RequestUtil;
 import com.ido.robin.sstable.SSTable;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -14,6 +15,8 @@ public class StateController implements RequestController {
 
     @Override
     public HttpResponse handleInner(FullHttpRequest request) {
+        RequestCounterMetrics.inc("state");
+
         SSTable.State val = SSTableManager.getInstance().getState();
         if (val == null) {
             return RequestUtil.buildHttpRsp("");

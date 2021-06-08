@@ -1,5 +1,7 @@
 package com.ido.robin.server;
 
+import com.ido.robin.server.metrics.MetricsConfig;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -11,6 +13,7 @@ public class AppRuner {
 
 
     public static void main(String[] args) {
+        MetricsConfig.registerMetrics();
 
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         int rp = Integer.getInteger("remote.port", 8688);

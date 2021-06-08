@@ -1,5 +1,6 @@
 package com.ido.robin.server.controller;
 
+import com.ido.robin.server.metrics.RequestCounterMetrics;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -15,6 +16,8 @@ import io.netty.handler.codec.http.HttpVersion;
 public class NotFoundController implements RequestController {
     @Override
     public HttpResponse handleInner(FullHttpRequest request) {
+        RequestCounterMetrics.inc("not-found");
+
         ByteBuf byteBuf = Unpooled.wrappedBuffer("".getBytes());
         HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, byteBuf);
         response.headers().add("content-length", 0);

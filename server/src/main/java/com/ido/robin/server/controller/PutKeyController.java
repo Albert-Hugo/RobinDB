@@ -1,6 +1,7 @@
 package com.ido.robin.server.controller;
 
 import com.ido.robin.server.SSTableManager;
+import com.ido.robin.server.metrics.RequestCounterMetrics;
 import com.ido.robin.server.util.RequestUtil;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -26,6 +27,8 @@ public class PutKeyController implements RequestController {
 
     @Override
     public HttpResponse handleInner(FullHttpRequest request) {
+        RequestCounterMetrics.inc("put-key");
+
         PutKeyController.PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
         log.info("put key :{},val :{}", cmd.key, cmd.val);
         SSTableManager.getInstance().put(cmd.key, cmd.val);

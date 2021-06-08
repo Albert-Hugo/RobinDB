@@ -2,6 +2,7 @@ package com.ido.robin.server.controller;
 
 import com.ido.robin.server.SSTableManager;
 import com.ido.robin.server.controller.dto.KeyDetail;
+import com.ido.robin.server.metrics.RequestCounterMetrics;
 import com.ido.robin.server.util.RequestUtil;
 import com.ido.robin.sstable.Block;
 import com.ido.robin.sstable.KeyValue;
@@ -30,6 +31,8 @@ public class KeysDetailController implements RequestController {
 
     @Override
     public HttpResponse handleInner(FullHttpRequest request) {
+        RequestCounterMetrics.inc("key-detail");
+
         GetKeysDetailCmd getCmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
         Optional<SegmentFile> t;
         t = SSTableManager.getInstance().getSegmentFiles().stream().filter(f -> f.getHeader().getSegmentFileName().equals(getCmd.file)).findFirst();
