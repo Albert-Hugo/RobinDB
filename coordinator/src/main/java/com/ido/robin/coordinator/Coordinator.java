@@ -17,6 +17,9 @@ public class Coordinator {
     private HashRing hashRing;
 
     public Coordinator(List<DistributedServer> servers) {
+        if (servers == null || servers.isEmpty()) {
+            throw new IllegalStateException("servers list can not be empty");
+        }
         this.servers = servers;
         hashRing = new HashRing(servers.size());
         this.servers.forEach(s -> {

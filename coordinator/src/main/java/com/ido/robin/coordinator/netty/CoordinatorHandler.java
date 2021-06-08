@@ -3,13 +3,23 @@ package com.ido.robin.coordinator.netty;
 import com.google.gson.Gson;
 import com.ido.robin.coordinator.Coordinator;
 import com.ido.robin.coordinator.DistributedWebServer;
+import com.ido.robin.server.constant.Route;
+import com.ido.robin.server.controller.dto.GetCmd;
+import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
+import com.ido.robin.server.controller.dto.RemoveCmd;
+import com.ido.robin.server.util.RequestUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -84,33 +94,38 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
         CompletableFuture fsRsp = CompletableFuture.supplyAsync(() -> {
-            String getCmd = "/get/";
-            String deleteCmd = "/delete/";
-            String putCmd = "/put";
             String removeNodeCmd = "/node/delete";
             String addNodeCmd = "/node/add";
-            if (request.method().name().equals("GET") && request.uri().startsWith(getCmd)) {
-                int i = request.uri().indexOf(getCmd);
-                String k = request.uri().substring(i + getCmd.length());
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(k);
+            String route = RequestUtil.getRequestRoute(request);
+
+            if (route.equals(Route.GET)) {
+                GetCmd getCmd = RequestUtil.extractRequestParams(request, GetCmd.class);
+                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(getCmd.key);
                 //send request to remote server and return the response
+
                 return buildHttpRsp(new String(targetServer.get(request.uri())));
 
-            } else if (request.method().name().equals("DELETE") && request.uri().startsWith(deleteCmd)) {
-                int i = request.uri().indexOf(deleteCmd);
-                String k = request.uri().substring(i + deleteCmd.length());
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(k);
+            } else if (route.equals(Route.DELETE)) {
+                RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
+                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
                 //send request to remote server and return the response
                 return buildHttpRsp(new String(targetServer.delete(request.uri())));
 
-            } else if (request.method().name().equals("POST") && request.uri().startsWith(putCmd)) {
-                byte[] data = getRequestData(request);
-
-                PutCmd cmd = GSON.fromJson(new String(data), PutCmd.class);
+            } else if (route.equals(Route.PUT)) {
+                PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
-                targetServer.put(data);
+                String d = GSON.toJson(cmd);
+                targetServer.put(d.getBytes());
                 return buildHttpRsp("ok");
-            } else if (request.method().name().equals("DELETE") && request.uri().startsWith(removeNodeCmd)) {
+            } else if (route.equals(Route.FILE_KEYS_DETAIL)) {
+                GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
+                //todo 获取 file 中的 start key 定位 server；
+                String key = "";
+                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(key);
+                String d = GSON.toJson(cmd);
+                targetServer.put(d.getBytes());
+                return buildHttpRsp("ok");
+            } else if (request.uri().startsWith(removeNodeCmd)) {
                 byte[] data = getRequestData(request);
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
 
