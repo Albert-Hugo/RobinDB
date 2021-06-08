@@ -1,6 +1,7 @@
 package com.ido.robin.server.controller;
 
 import com.ido.robin.server.SSTableManager;
+import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
 import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.server.metrics.RequestCounterMetrics;
 import com.ido.robin.server.util.RequestUtil;
@@ -22,12 +23,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class KeysDetailController implements RequestController {
-    public static class GetKeysDetailCmd {
-        public String file;
-        public String pageSize = "10";
-        public String page = "0";
-
-    }
 
     @Override
     public HttpResponse handleInner(FullHttpRequest request) {
