@@ -33,32 +33,39 @@ public class Coordinator {
     }
 
     private void monitorServersHealth() {
-        Thread thread = new Thread(() -> {
-            while (true) {
-                this.servers.forEach(s -> {
+        for (int i = 0; i < this.servers.size(); i++) {
+            DistributedServer s = servers.get(i);
+            Thread thread = new Thread(() -> {
+                int sleepInterval = Integer.getInteger("health.interval", 5000);
+                int maxInterval = Integer.getInteger("health.max.interval", 60 * 1000);
+                while (true) {
                     String url = "http://" + s.host() + ":" + s.getHttpPort() + "/" + Route.HEALTH;
                     byte[] bs = HttpUtil.get(url, null);
                     if (bs != null && "ok".equals(new String(bs))) {
                         s.setHealth(true);
+                        sleepInterval = 5000;
                     } else {
                         log.warn("host：{} not healthy", s.host());
+                        //设置最大请求间隔60s，如果一直出错，时间翻倍递增
+
+                        sleepInterval = sleepInterval * 2 > maxInterval ? maxInterval : sleepInterval * 2;
                         s.setHealth(false);
                     }
 
-                });
 
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage(), e);
-                    Thread.interrupted();
+                    try {
+                        Thread.sleep(sleepInterval);
+                    } catch (InterruptedException e) {
+                        log.error(e.getMessage(), e);
+                        Thread.interrupted();
+                    }
                 }
-            }
 
 
-        });
-        thread.setDaemon(true);
-        thread.start();
+            });
+            thread.setDaemon(true);
+            thread.start();
+        }
 
     }
 
@@ -74,6 +81,7 @@ public class Coordinator {
      * @return 被选中的server
      */
     public DistributedServer choose(String key) {
+        //todo for not healthy node , not to return or duplicate data to other nodes.
         int hashVal = hash(key);
         Optional<DistributedServer> s = servers.stream().filter(server -> server.isInRange(hashVal)).findFirst();
         if (!s.isPresent()) {
