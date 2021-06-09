@@ -4,10 +4,9 @@ import com.ido.robin.common.HttpUtil;
 import com.ido.robin.common.JsonUtil;
 import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.KeyDetail;
+import com.ido.robin.server.controller.dto.PutCmd;
+import com.ido.robin.server.controller.dto.RemoveCmd;
 import com.ido.robin.sstable.dto.State;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -35,22 +34,13 @@ public class DistributedWebServer implements DistributedServer {
         this.name = name;
     }
 
-    public byte[] delete(String url) {
-        //send request to remote server and return the response
-        //send request to remote server and return the response
-        HttpDelete post = new HttpDelete(makeUrl(url));
-        byte[] bs = HttpUtil.delete(post, null);
+    public byte[] delete(RemoveCmd cmd) {
+        byte[] bs = HttpUtil.postJson(makeUrl(Route.DELETE), cmd, null);
         return bs;
     }
 
-    public byte[] put(byte[] data) {
-        //send request to remote server and return the response
-        HttpPost post = new HttpPost(makeUrl("put"));
-        post.setEntity(new ByteArrayEntity(data));
-        HttpUtil.postForm(post, data, null);
-        byte[] bs = HttpUtil.postForm(post, data, null);
-        return bs;
-
+    public byte[] put(PutCmd cmd) {
+        return HttpUtil.postJson(makeUrl(Route.PUT), cmd, null);
     }
 
     public State state() {

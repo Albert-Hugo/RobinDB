@@ -9,6 +9,7 @@ import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.GetCmd;
 import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
 import com.ido.robin.server.controller.dto.KeyDetail;
+import com.ido.robin.server.controller.dto.PutCmd;
 import com.ido.robin.server.controller.dto.RemoveCmd;
 import com.ido.robin.server.util.RequestUtil;
 import com.ido.robin.sstable.dto.State;
@@ -63,20 +64,12 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
             if (((FullHttpRequest) msg).uri().equals("/favicon.ico")) {
                 ctx.close();
             }
+
             handleHttpRequest(ctx, (FullHttpRequest) msg);
         }
     }
 
 
-    static class PutCmd {
-        String key;
-        String val;
-
-        public PutCmd(String key, String val) {
-            this.key = key;
-            this.val = val;
-        }
-    }
 
     static class RemoveNodeCmd {
         String host;
@@ -100,6 +93,9 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
             String removeNodeCmd = "/node/delete";
             String addNodeCmd = "/node/add";
             String route = RequestUtil.getRequestRoute(request);
+            if ("OPTIONS".equals(request.method().name())) {
+                return RequestUtil.buildJsonRsp(null);
+            }
 
             if (route.equals(Route.GET)) {
                 GetCmd getCmd = RequestUtil.extractRequestParams(request, GetCmd.class);
@@ -112,13 +108,13 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
                 //send request to remote server and return the response
-                return RequestUtil.buildHttpRsp(new String(targetServer.delete(request.uri())));
+                targetServer.delete(cmd);
+                return RequestUtil.buildHttpRsp("ok");
 
             } else if (route.equals(Route.PUT)) {
                 PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
-                String d = GSON.toJson(cmd);
-                targetServer.put(d.getBytes());
+                targetServer.put(cmd);
                 return RequestUtil.buildHttpRsp("ok");
             } else if (route.equals(Route.FILE_KEYS_DETAIL)) {
                 GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
