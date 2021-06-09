@@ -15,8 +15,9 @@ public class MetricsConfig {
 
 
     public static void registerMetrics() {
+        int port = Integer.getInteger("metrics.port", 1234);
         try {
-            server = new HTTPServer(1234);
+            server = new HTTPServer(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
