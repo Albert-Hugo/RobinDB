@@ -1,6 +1,8 @@
 package com.ido.robin.server.handler;
 
+import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.GetKeyController;
+import com.ido.robin.server.controller.HealthController;
 import com.ido.robin.server.controller.KeysDetailController;
 import com.ido.robin.server.controller.NotFoundController;
 import com.ido.robin.server.controller.PutKeyController;
@@ -30,11 +32,12 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
     private final NotFoundController notFoundController = new NotFoundController();
 
     static {
-        handlersMapping.put("/get", new GetKeyController());
-        handlersMapping.put("/delete", new RemoveKeyController());
-        handlersMapping.put("/put", new PutKeyController());
-        handlersMapping.put("/state", new StateController());
-        handlersMapping.put("/file-keys-detail", new KeysDetailController());
+        handlersMapping.put(Route.GET, new GetKeyController());
+        handlersMapping.put(Route.HEALTH, new HealthController());
+        handlersMapping.put(Route.DELETE, new RemoveKeyController());
+        handlersMapping.put(Route.PUT, new PutKeyController());
+        handlersMapping.put(Route.STATE, new StateController());
+        handlersMapping.put(Route.FILE_KEYS_DETAIL, new KeysDetailController());
     }
 
 

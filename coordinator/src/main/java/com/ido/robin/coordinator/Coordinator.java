@@ -1,7 +1,9 @@
 package com.ido.robin.coordinator;
 
 import com.ido.robin.client.RobinClient;
+import com.ido.robin.common.HttpUtil;
 import com.ido.robin.rpc.proto.RemoteCmd;
+import com.ido.robin.server.constant.Route;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -25,6 +27,38 @@ public class Coordinator {
         this.servers.forEach(s -> {
             s.setSlot(hashRing.locateSlot(s));
         });
+
+        monitorServersHealth();
+
+    }
+
+    private void monitorServersHealth() {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                this.servers.forEach(s -> {
+                    String url = "http://" + s.host() + ":" + s.getHttpPort() + "/" + Route.HEALTH;
+                    byte[] bs = HttpUtil.get(url, null);
+                    if (bs != null && "ok".equals(new String(bs))) {
+                        s.setHealth(true);
+                    } else {
+                        log.warn("host：{} not healthy", s.host());
+                        s.setHealth(false);
+                    }
+
+                });
+
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                    Thread.interrupted();
+                }
+            }
+
+
+        });
+        thread.setDaemon(true);
+        thread.start();
 
     }
 

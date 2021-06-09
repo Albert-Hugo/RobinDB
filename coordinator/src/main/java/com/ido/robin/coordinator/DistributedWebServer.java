@@ -23,6 +23,7 @@ public class DistributedWebServer implements DistributedServer {
     final private int port;
     final private int httpPort;
     final private String name;
+    private boolean health = true;
 
     /**
      * @param name the server name
@@ -106,8 +107,12 @@ public class DistributedWebServer implements DistributedServer {
 
     @Override
     public boolean healthy() {
-        //todo 检测 node 的健康信息
-        return true;
+        return this.health;
+    }
+
+    @Override
+    public void setHealth(boolean health) {
+        this.health = health;
     }
 
     @Override

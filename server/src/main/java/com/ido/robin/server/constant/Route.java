@@ -6,6 +6,7 @@ package com.ido.robin.server.constant;
  */
 public class Route {
     public final static String GET = "/get";
+    public final static String HEALTH = "/health";
     public final static String DELETE = "/delete";
     public final static String PUT = "/put";
     public final static String STATE = "/state";
