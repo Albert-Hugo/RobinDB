@@ -120,7 +120,7 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
                 // 获取 file 中的 start key 定位 server；
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.keyRangeStart);
-                KeyDetail keyDetail = targetServer.getKeysDetail(cmd.file);
+                KeyDetail keyDetail = targetServer.getKeysDetail(cmd);
                 return RequestUtil.buildJsonRsp(keyDetail);
             } else if (route.equals(Route.STATE)) {
                 List<DistributedServer> serverList = coordinator.getServers();

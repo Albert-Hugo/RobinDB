@@ -3,6 +3,7 @@ package com.ido.robin.coordinator;
 import com.ido.robin.common.HttpUtil;
 import com.ido.robin.common.JsonUtil;
 import com.ido.robin.server.constant.Route;
+import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
 import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.server.controller.dto.PutCmd;
 import com.ido.robin.server.controller.dto.RemoveCmd;
@@ -63,11 +64,12 @@ public class DistributedWebServer implements DistributedServer {
     }
 
 
-    public KeyDetail getKeysDetail(String fileName) {
+    public KeyDetail getKeysDetail(GetKeysDetailCmd cmd) {
 
         byte[] bs = new byte[0];
+        String url = String.format("file=%s&page=%s&pageSize=%s&keyRangeStart=%s", cmd.file, cmd.page, cmd.pageSize, cmd.keyRangeStart);
         try {
-            bs = HttpUtil.get(makeUrl(Route.FILE_KEYS_DETAIL + "?" + URLEncoder.encode("file=" + fileName, "UTF-8")), null);
+            bs = HttpUtil.get(makeUrl(Route.FILE_KEYS_DETAIL + "?" + URLEncoder.encode(url, "UTF-8")), null);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
