@@ -8,6 +8,7 @@ import com.ido.robin.coordinator.dto.NodeInfo;
 import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.GetCmd;
 import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
+import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.server.controller.dto.RemoveCmd;
 import com.ido.robin.server.util.RequestUtil;
 import com.ido.robin.sstable.dto.State;
@@ -121,12 +122,10 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 return RequestUtil.buildHttpRsp("ok");
             } else if (route.equals(Route.FILE_KEYS_DETAIL)) {
                 GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
-                //todo 获取 file 中的 start key 定位 server；
-                String key = "";
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(key);
-                String d = GSON.toJson(cmd);
-                targetServer.put(d.getBytes());
-                return RequestUtil.buildHttpRsp("ok");
+                // 获取 file 中的 start key 定位 server；
+                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.keyRangeStart);
+                KeyDetail keyDetail = targetServer.getKeysDetail(cmd.file);
+                return RequestUtil.buildJsonRsp(keyDetail);
             } else if (route.equals(Route.STATE)) {
                 List<DistributedServer> serverList = coordinator.getServers();
                 List<State> states = serverList.stream().map(a -> {

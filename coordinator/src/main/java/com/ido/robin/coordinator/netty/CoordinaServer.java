@@ -5,7 +5,11 @@ import com.ido.robin.coordinator.DistributedServer;
 import com.ido.robin.coordinator.DistributedWebServer;
 import com.ido.robin.server.Server;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -101,7 +105,7 @@ public class CoordinaServer implements Server {
     public static void main(String[] args) {
         List<DistributedServer> serverList = new ArrayList<>();
         serverList.add(new DistributedWebServer("test", "localhost", 8688, 8888));
-        serverList.add(new DistributedWebServer("test", "localhost", 18688, 18888));
+//        serverList.add(new DistributedWebServer("test", "localhost", 18688, 18888));
 
         Coordinator coordinator = new Coordinator(serverList);
         new CoordinaServer(coordinator).start(10086);

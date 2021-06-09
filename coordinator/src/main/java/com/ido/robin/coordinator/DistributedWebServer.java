@@ -3,10 +3,14 @@ package com.ido.robin.coordinator;
 import com.ido.robin.common.HttpUtil;
 import com.ido.robin.common.JsonUtil;
 import com.ido.robin.server.constant.Route;
+import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.sstable.dto.State;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * @author Ido
@@ -65,6 +69,20 @@ public class DistributedWebServer implements DistributedServer {
         //send request to remote server and return the response
         byte[] bs = HttpUtil.get(makeUrl(url), null);
         return bs;
+
+    }
+
+
+    public KeyDetail getKeysDetail(String fileName) {
+
+        byte[] bs = new byte[0];
+        try {
+            bs = HttpUtil.get(makeUrl(Route.FILE_KEYS_DETAIL + "?" + URLEncoder.encode("file=" + fileName, "UTF-8")), null);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        KeyDetail keyDetails = JsonUtil.fromJson(new String(bs), KeyDetail.class);
+        return keyDetails;
 
     }
 

@@ -9,6 +9,7 @@ import lombok.Data;
 @Data
 public class GetKeysDetailCmd {
     public String file;
+    public String keyRangeStart;
     public String pageSize = "10";
     public String page = "1";
 }
