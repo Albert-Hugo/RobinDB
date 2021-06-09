@@ -100,14 +100,11 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
             if (route.equals(Route.GET)) {
                 GetCmd getCmd = RequestUtil.extractRequestParams(request, GetCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(getCmd.key);
-                //send request to remote server and return the response
-
-                return RequestUtil.buildHttpRsp(new String(targetServer.get(request.uri())));
+                return RequestUtil.buildHttpRsp(new String(targetServer.get(getCmd)));
 
             } else if (route.equals(Route.DELETE)) {
                 RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
                 DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
-                //send request to remote server and return the response
                 targetServer.delete(cmd);
                 return RequestUtil.buildHttpRsp("ok");
 

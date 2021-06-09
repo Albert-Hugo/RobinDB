@@ -3,6 +3,7 @@ package com.ido.robin.coordinator;
 import com.ido.robin.common.HttpUtil;
 import com.ido.robin.common.JsonUtil;
 import com.ido.robin.server.constant.Route;
+import com.ido.robin.server.controller.dto.GetCmd;
 import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
 import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.server.controller.dto.PutCmd;
@@ -51,13 +52,13 @@ public class DistributedWebServer implements DistributedServer {
 
     }
 
-    String makeUrl(String path) {
+    private String makeUrl(String path) {
         return "http://" + host + ":" + httpPort + "/" + path;
     }
 
 
-    public byte[] get(String url) {
-        //send request to remote server and return the response
+    public byte[] get(GetCmd getCmd) {
+        String url = Route.GET + String.format("?key=%s", getCmd.key);
         byte[] bs = HttpUtil.get(makeUrl(url), null);
         return bs;
 
