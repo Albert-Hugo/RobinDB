@@ -113,7 +113,8 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 return RequestUtil.buildJsonRsp(keyDetail);
             } else if (route.equals(Route.STATE)) {
                 List<DistributedServer> serverList = coordinator.getServers();
-                List<State> states = serverList.stream().map(a -> {
+                //只获取 healthy 的节点数据
+                List<State> states = serverList.stream().filter(DistributedServer::healthy).map(a -> {
                     DistributedWebServer s = (DistributedWebServer) a;
                     return s.state();
                 }).filter(a -> a != null && a.getMetas() != null && a.getMetas().get(0).getMetadata().getSegmentFileName() != null).collect(Collectors.toList());
