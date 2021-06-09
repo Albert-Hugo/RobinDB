@@ -105,7 +105,7 @@ public class CoordinaServer implements Server {
     public static void main(String[] args) {
         List<DistributedServer> serverList = new ArrayList<>();
         serverList.add(new DistributedWebServer("test", "localhost", 8688, 8888));
-//        serverList.add(new DistributedWebServer("test", "localhost", 18688, 18888));
+        serverList.add(new DistributedWebServer("test", "localhost", 18688, 18888));
 
         Coordinator coordinator = new Coordinator(serverList);
         new CoordinaServer(coordinator).start(10086);

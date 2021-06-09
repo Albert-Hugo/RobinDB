@@ -66,7 +66,9 @@ public class WebServerHandler extends ChannelInboundHandlerAdapter {
 
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
-        log.info(request.uri());
+        if (log.isDebugEnabled()) {
+            log.debug(request.uri());
+        }
 
         CompletableFuture fsRsp = CompletableFuture.supplyAsync(() -> {
             String route = RequestUtil.getRequestRoute(request);
