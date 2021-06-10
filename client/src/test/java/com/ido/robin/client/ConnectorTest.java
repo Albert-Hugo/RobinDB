@@ -5,7 +5,6 @@ import com.ido.robin.rpc.proto.RemoteCmd;
 import org.junit.Test;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 
 /**
  * @author Ido
@@ -14,7 +13,7 @@ import java.io.IOException;
 public class ConnectorTest {
 
     @Test
-    public void testCopy() throws IOException {
+    public void testCopy() throws Exception {
         Connector connector = new Connector("localhost", 8688);
         connector.connect();
         FileInputStream fs = new FileInputStream("D:\\software\\protoc-3.13.0-win64\\bin\\com\\ido\\robin\\rpc\\proto\\RemoteCmd.java");
@@ -26,18 +25,17 @@ public class ConnectorTest {
     }
 
     @Test
-    public void testSet() throws IOException {
+    public void testSet() throws Exception {
         Connector connector = new Connector("localhost", 8688);
+
         connector.connect();
         connector.put("Remote.java", "fsf");
         System.out.println(connector.get("Remote.java"));
-        ;
         connector.close();
-        ;
     }
 
     @Test
-    public void testSendRemoteRequest() throws IOException {
+    public void testSendRemoteRequest() throws Exception {
         Connector connector = new Connector("localhost", 8688);
         connector.connect();
         connector.sendRemoteCopyRequest("localhost", 8688, 0, 10000, RemoteCmd.RemoteCopyRequest.CopyType.ADD);

@@ -60,7 +60,7 @@ public class Connector {
         return this;
     }
 
-    public void connect() {
+    public void connect() throws Exception {
         Bootstrap bootstrap = new Bootstrap();
         nioEventLoopGroup = new NioEventLoopGroup();
         Connector that = this;
@@ -81,33 +81,24 @@ public class Connector {
                 });
         ChannelFuture f = bootstrap.connect(host, port);
 
-        f
-                .addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (!future.isSuccess()) {
-//                            log.error(future.cause().getMessage(), future.cause());
-                            throw new Exception(future.cause());
-                        }
-
-                        log.debug("connect to RobinDB {}:{}", host, port);
-
-                    }
-                });
         try {
             f.sync();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        while (serverChannel == null) {
+        } catch (Exception e) {
             try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
+                throw e;
+            } catch (InterruptedException e1) {
+                log.error(e.getMessage(), e1);
             }
         }
-        f.channel().closeFuture();
+
+        f.channel().closeFuture().addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.isSuccess()) {
+                    log.info(" connection close");
+                }
+            }
+        });
 
     }
 
@@ -209,7 +200,6 @@ public class Connector {
 
     public String get(String k) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-//        RemoteCmd.Cmd cmd = RemoteCmd.Cmd.newBuilder().setId(cmdId.getAndIncrement()).setKey(k).setType(RemoteCmd.Cmd.CmdType.GET).build();
         RemoteCmd.Cmd cmd = RemoteCmd.Cmd.newBuilder().setBasicCmd(RemoteCmd.BasicCmd.newBuilder().setId(cmdId.getAndIncrement()).setKey(k).setType(RemoteCmd.BasicCmd.CmdType.GET).build()).build();
         responseTable.put(cmd.getBasicCmd().getId(), countDownLatch);
         this.serverChannel.writeAndFlush(cmd).addListener(new ChannelFutureListener() {
