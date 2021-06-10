@@ -2,11 +2,14 @@ package com.ido.robin.coordinator;
 
 import com.ido.robin.client.RobinClient;
 import com.ido.robin.common.HttpUtil;
+import com.ido.robin.coordinator.exception.ServerNotFoundException;
 import com.ido.robin.rpc.proto.RemoteCmd;
 import com.ido.robin.server.constant.Route;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -17,6 +20,7 @@ import java.util.Optional;
 public class Coordinator {
     List<DistributedServer> servers;
     private HashRing hashRing;
+    private Map<DistributedServer, Thread> monitorTask = new HashMap<>();
 
     public Coordinator(List<DistributedServer> servers) {
         if (servers == null || servers.isEmpty()) {
@@ -35,37 +39,53 @@ public class Coordinator {
     private void monitorServersHealth() {
         for (int i = 0; i < this.servers.size(); i++) {
             DistributedServer s = servers.get(i);
-            Thread thread = new Thread(() -> {
-                int sleepInterval = Integer.getInteger("health.interval", 5000);
-                int maxInterval = Integer.getInteger("health.max.interval", 60 * 1000);
-                while (true) {
-                    String url = "http://" + s.host() + ":" + s.getHttpPort() + "/" + Route.HEALTH;
-                    byte[] bs = HttpUtil.get(url, null);
-                    if (bs != null && "ok".equals(new String(bs))) {
-                        s.setHealth(true);
-                        sleepInterval = 5000;
-                    } else {
-                        log.warn("host：{} not healthy", s.host());
-                        //设置最大请求间隔60s，如果一直出错，时间翻倍递增
 
-                        sleepInterval = sleepInterval * 2 > maxInterval ? maxInterval : sleepInterval * 2;
-                        s.setHealth(false);
+            doStartMonitor(s);
+
+        }
+
+    }
+
+    private void doStartMonitor(DistributedServer s) {
+        Thread thread = new Thread(() -> {
+            int sleepInterval = Integer.getInteger("health.interval", 5000);
+            int maxInterval = Integer.getInteger("health.max.interval", 60 * 1000);
+            while (true) {
+                String url = "http://" + s.host() + ":" + s.getHttpPort() + "/" + Route.HEALTH;
+                byte[] bs = HttpUtil.get(url, null);
+                if (bs != null && "ok".equals(new String(bs))) {
+                    if (!s.healthy()) {
+                        log.info("host [{}] is status up now!", s.host());
                     }
+                    s.setHealth(true);
+                    sleepInterval = 5000;
 
+                } else {
+                    log.warn("host：{} not healthy", s.host());
+                    //设置最大请求间隔60s，如果一直出错，时间翻倍递增
 
-                    try {
-                        Thread.sleep(sleepInterval);
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage(), e);
-                        Thread.interrupted();
-                    }
+                    sleepInterval = sleepInterval * 2 > maxInterval ? maxInterval : sleepInterval * 2;
+                    s.setHealth(false);
                 }
 
 
-            });
-            thread.setDaemon(true);
-            thread.start();
-        }
+                try {
+                    Thread.sleep(sleepInterval);
+                } catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                    Thread.interrupted();
+                }
+            }
+
+
+        });
+        thread.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
+            log.error("thread {} throw exceptions {}", thread.getName(), e.getMessage());
+        });
+        thread.setDaemon(true);
+        thread.start();
+
+        monitorTask.put(s, thread);
 
     }
 
@@ -80,12 +100,12 @@ public class Coordinator {
      * @param key 待操作的key
      * @return 被选中的server
      */
-    public DistributedServer choose(String key) {
+    public DistributedServer choose(String key) throws ServerNotFoundException {
         //todo for not healthy node , not to return or duplicate data to other nodes.
         int hashVal = hash(key);
         Optional<DistributedServer> s = servers.stream().filter(server -> server.isInRange(hashVal)).findFirst();
         if (!s.isPresent()) {
-            throw new IllegalStateException("server not found");
+            throw new ServerNotFoundException("server not found by " + key);
         }
         return s.get();
     }
@@ -97,7 +117,7 @@ public class Coordinator {
      * @param port
      * @return
      */
-    public DistributedServer removeNode(String host, int port) {
+    public DistributedServer removeNode(String host, int port) throws Exception {
         //获取被移除server 的下一个节点，并将下一个节点的hash range 包含被移除的节点范围。同时将被移除的节点的文件迁移到下一个节点上
         Optional<DistributedServer> p = this.servers.stream().filter(s -> s.host().equals(host) && s.port() == port).findAny();
         if (!p.isPresent()) {
@@ -110,7 +130,20 @@ public class Coordinator {
         nextNode.setSlot(mergedSlot);
         remoteCopy(toRemove, nextNode, RemoteCmd.RemoteCopyRequest.CopyType.REMOVE);
 
+        cleanAfterShutDown(toRemove);
+
         return toRemove;
+    }
+
+    private void cleanAfterShutDown(DistributedServer toRemove) {
+        if (this.servers.remove(toRemove)) {
+            log.info("node {} remove success", toRemove);
+            Thread t = monitorTask.get(toRemove);
+            if (t != null) {
+                t.interrupt();
+            }
+        }
+
     }
 
 
@@ -132,7 +165,7 @@ public class Coordinator {
      * @param server 待添加server
      * @return server name
      */
-    public String addNode(DistributedServer server) {
+    public String addNode(DistributedServer server) throws Exception {
         //如果哈希环上没有足够的空闲槽位，则添加
         HashRing.Slot removedSlot = null;
         if (this.hashRing.emptySlots().size() == 0) {
@@ -150,10 +183,10 @@ public class Coordinator {
             }
         }
         server.setSlot(hashRing.locateSlot(server));
+        remoteCopy(source, server, RemoteCmd.RemoteCopyRequest.CopyType.ADD);
 
         this.servers.add(server);
-
-        remoteCopy(source, server, RemoteCmd.RemoteCopyRequest.CopyType.ADD);
+        doStartMonitor(server);
 
         return server.name();
     }
@@ -162,7 +195,7 @@ public class Coordinator {
      * @param source the source server
      * @param target target server
      */
-    void remoteCopy(DistributedServer source, DistributedServer target, RemoteCmd.RemoteCopyRequest.CopyType type) {
+    void remoteCopy(DistributedServer source, DistributedServer target, RemoteCmd.RemoteCopyRequest.CopyType type) throws Exception {
         //将文件直接从源服务器迁移到 目标服务器，减少不必要的拷贝
         String host = source.host();
         int port = source.port();

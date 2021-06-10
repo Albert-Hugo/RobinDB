@@ -1,9 +1,15 @@
 package com.ido.robin.client.netty;
 
 import com.google.protobuf.ByteString;
+import com.ido.robin.client.RemoteCopyException;
 import com.ido.robin.rpc.proto.RemoteCmd;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -80,16 +86,19 @@ public class Connector {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
                         if (!future.isSuccess()) {
-                            future.cause().printStackTrace();
-                            log.error(future.cause().getMessage(), future.cause());
-                            return;
+//                            log.error(future.cause().getMessage(), future.cause());
+                            throw new Exception(future.cause());
                         }
 
                         log.debug("connect to RobinDB {}:{}", host, port);
 
-
                     }
                 });
+        try {
+            f.sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         while (serverChannel == null) {
             try {
@@ -144,6 +153,14 @@ public class Connector {
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
         }
+        /**
+         * 返回结果在 {@link ClientHandler#channelRead(ChannelHandlerContext, Object)} 中设置
+         */
+        String result = (String) responseTable.get(cmd.getRemoteCopyRequest().getId());
+        if (!"ok".equals(result)) {
+            throw new RemoteCopyException(result);
+        }
+        log.info("result : [{}]", result);
     }
 
     /**

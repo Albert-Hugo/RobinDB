@@ -12,7 +12,7 @@ import java.util.List;
 public class CoordinatorTest {
 
     @Test
-    public void testAddNode() {
+    public void testAddNode() throws Exception {
         List list = new ArrayList<>();
         list.add(new DistributedWebServer("test", "localhost", 8688, 8888));
         list.add(new DistributedWebServer("test", "localhost", 18688, 18888));
@@ -23,7 +23,7 @@ public class CoordinatorTest {
 
 
     @Test
-    public void testRemoveNode() {
+    public void testRemoveNode() throws Exception {
         List list = new ArrayList<>();
         list.add(new DistributedWebServer("test", "localhost", 8688, 8888));
         list.add(new DistributedWebServer("test", "localhost", 18688, 18888));

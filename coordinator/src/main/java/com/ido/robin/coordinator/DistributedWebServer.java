@@ -12,6 +12,7 @@ import com.ido.robin.sstable.dto.State;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Objects;
 
 /**
  * @author Ido
@@ -130,5 +131,27 @@ public class DistributedWebServer implements DistributedServer {
         return this.port;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DistributedWebServer that = (DistributedWebServer) o;
+        return port == that.port &&
+                httpPort == that.httpPort &&
+                Objects.equals(host, that.host);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, port, httpPort);
+    }
+
+    @Override
+    public String toString() {
+        return "DistributedWebServer{" +
+                "host='" + host + '\'' +
+                ", port=" + port +
+                ", httpPort=" + httpPort +
+                '}';
+    }
 }

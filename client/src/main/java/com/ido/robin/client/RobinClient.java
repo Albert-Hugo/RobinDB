@@ -2,20 +2,25 @@ package com.ido.robin.client;
 
 import com.ido.robin.client.netty.Connector;
 import com.ido.robin.rpc.proto.RemoteCmd;
-
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
  * @author Ido
  * @date 2019/1/24 10:18
  */
+@Slf4j
 public class RobinClient {
 
     private Connector connector;
 
-    public RobinClient(String host, int port) {
+    public RobinClient(String host, int port) throws Exception {
         this.connector = new Connector(host, port);
-        this.connector.connect();
+        try {
+            this.connector.connect();
+        } catch (Exception ex) {
+            throw ex;
+        }
     }
 
     public void copyData(String fileName, byte[] data) {

@@ -32,7 +32,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RemoteCmd.Cmd> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RemoteCmd.Cmd cmd) throws Exception {
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RemoteCmd.Cmd cmd) {
         if (cmd.getRemoteCopyRequest() != null && !cmd.getRemoteCopyRequest().getTargetHost().isEmpty()) {
             if (cmd.getRemoteCopyRequest().getType().equals(RemoteCmd.RemoteCopyRequest.CopyType.ADD)) {
 
@@ -40,7 +40,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<RemoteCmd.Cmd> {
 
                 String host = cmd.getRemoteCopyRequest().getTargetHost();
                 int port = cmd.getRemoteCopyRequest().getTargetPort();
-                RobinClient client = new RobinClient(host, port);
+                RobinClient client = null;
+                try {
+                    client = new RobinClient(host, port);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    RemoteCmd.Cmd result = RemoteCmd.Cmd.newBuilder().setBasicCmd(RemoteCmd.BasicCmd.newBuilder().setValue(e.getMessage()).setId(cmd.getRemoteCopyRequest().getId()).build()).build();
+                    channelHandlerContext.writeAndFlush(result);
+                    return;
+                }
                 int start = cmd.getRemoteCopyRequest().getHashRangeStart();
                 int end = cmd.getRemoteCopyRequest().getHashRangeEnd();
                 // 根据hash 范围值，计算需要迁移的key value 到目标服务器
@@ -58,7 +66,14 @@ public class ServerHandler extends SimpleChannelInboundHandler<RemoteCmd.Cmd> {
             } else {
                 String host = cmd.getRemoteCopyRequest().getTargetHost();
                 int port = cmd.getRemoteCopyRequest().getTargetPort();
-                RobinClient client = new RobinClient(host, port);
+                RobinClient client = null;
+                try {
+                    client = new RobinClient(host, port);
+                } catch (Exception e) {
+                    RemoteCmd.Cmd result = RemoteCmd.Cmd.newBuilder().setBasicCmd(RemoteCmd.BasicCmd.newBuilder().setValue(e.getMessage()).setId(cmd.getRemoteCopyRequest().getId()).build()).build();
+                    channelHandlerContext.writeAndFlush(result);
+                    return;
+                }
                 // 获取当前所有的 segment file data 复制到远程服务器
                 SSTable ssTable = SSTableManager.getInstance();
                 NavigableSet<Block> targetBlocks = new TreeSet<>();
@@ -78,7 +93,6 @@ public class ServerHandler extends SimpleChannelInboundHandler<RemoteCmd.Cmd> {
                 }
                 //send response
                 RemoteCmd.Cmd result = RemoteCmd.Cmd.newBuilder().setBasicCmd(RemoteCmd.BasicCmd.newBuilder().setValue("ok").setId(cmd.getRemoteCopyRequest().getId()).build()).build();
-                channelHandlerContext.writeAndFlush(result);
                 channelHandlerContext.writeAndFlush(result).addListener((future -> {
                     if (future.isSuccess()) {
                         //退出系统

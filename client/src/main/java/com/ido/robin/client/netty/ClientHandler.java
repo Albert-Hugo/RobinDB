@@ -3,6 +3,7 @@ package com.ido.robin.client.netty;
 import com.ido.robin.rpc.proto.RemoteCmd;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Ido
  * @date 2019/1/24 10:27
  */
+@Slf4j
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     Connector connector;
 
@@ -31,5 +33,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         countDownLatch.countDown();
         //接收返回结果
         connector.getResponseTable().put(cmd.getBasicCmd().getId(), cmd.getBasicCmd().getValue());
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        log.error(cause.getMessage());
     }
 }

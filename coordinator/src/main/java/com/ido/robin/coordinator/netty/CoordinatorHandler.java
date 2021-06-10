@@ -5,6 +5,7 @@ import com.ido.robin.coordinator.Coordinator;
 import com.ido.robin.coordinator.DistributedServer;
 import com.ido.robin.coordinator.DistributedWebServer;
 import com.ido.robin.coordinator.dto.NodeInfo;
+import com.ido.robin.coordinator.exception.ServerNotFoundException;
 import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.GetCmd;
 import com.ido.robin.server.controller.dto.GetKeysDetailCmd;
@@ -91,24 +92,45 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
 
             if (route.equals(Route.GET)) {
                 GetCmd getCmd = RequestUtil.extractRequestParams(request, GetCmd.class);
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(getCmd.key);
+                DistributedWebServer targetServer = null;
+                try {
+                    targetServer = (DistributedWebServer) coordinator.choose(getCmd.key);
+                } catch (ServerNotFoundException e) {
+                    return RequestUtil.buildHttpRsp("");
+                }
                 return RequestUtil.buildHttpRsp(new String(targetServer.get(getCmd)));
 
             } else if (route.equals(Route.DELETE)) {
                 RemoveCmd cmd = RequestUtil.extractRequestParams(request, RemoveCmd.class);
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
+                DistributedWebServer targetServer = null;
+                try {
+                    targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
+                } catch (ServerNotFoundException e) {
+                    log.error(e.getMessage());
+                    return RequestUtil.buildHttpRsp("key not found");
+                }
                 targetServer.delete(cmd);
                 return RequestUtil.buildHttpRsp("ok");
 
             } else if (route.equals(Route.PUT)) {
                 PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
+                DistributedWebServer targetServer = null;
+                try {
+                    targetServer = (DistributedWebServer) coordinator.choose(cmd.key);
+                } catch (ServerNotFoundException e) {
+                    return RequestUtil.buildHttpRsp("error");
+                }
                 targetServer.put(cmd);
                 return RequestUtil.buildHttpRsp("ok");
             } else if (route.equals(Route.FILE_KEYS_DETAIL)) {
                 GetKeysDetailCmd cmd = RequestUtil.extractRequestParams(request, GetKeysDetailCmd.class);
                 // 获取 file 中的 start key 定位 server；
-                DistributedWebServer targetServer = (DistributedWebServer) coordinator.choose(cmd.keyRangeStart);
+                DistributedWebServer targetServer = null;
+                try {
+                    targetServer = (DistributedWebServer) coordinator.choose(cmd.keyRangeStart);
+                } catch (ServerNotFoundException e) {
+                    log.error(e.getMessage());
+                }
                 KeyDetail keyDetail = targetServer.getKeysDetail(cmd);
                 return RequestUtil.buildJsonRsp(keyDetail);
             } else if (route.equals(Route.STATE)) {
@@ -135,13 +157,21 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 byte[] data = getRequestData(request);
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
 
-                coordinator.removeNode(cmd.host, cmd.port);
+                try {
+                    coordinator.removeNode(cmd.host, cmd.port);
+                } catch (Exception e) {
+                    return RequestUtil.buildHttpRsp(e.getMessage());
+                }
                 return RequestUtil.buildHttpRsp("ok");
             } else if (request.method().name().equals("POST") && request.uri().startsWith(addNodeCmd)) {
                 byte[] data = getRequestData(request);
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
 
-                coordinator.addNode(new DistributedWebServer("default", cmd.host, cmd.port, cmd.httpPort));
+                try {
+                    coordinator.addNode(new DistributedWebServer("default", cmd.host, cmd.port, cmd.httpPort));
+                } catch (Exception e) {
+                    return RequestUtil.buildHttpRsp(e.getMessage());
+                }
             }
 
             return RequestUtil.buildHttpRsp("ok");
