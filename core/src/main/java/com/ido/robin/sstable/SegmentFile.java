@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.ido.robin.common.FileUtil;
+import com.ido.robin.sstable.dto.Meta;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
@@ -176,6 +177,19 @@ public class SegmentFile implements Closeable, SortableFileName {
             }
         }
 
+    }
+
+    public Meta getMetaData() {
+        consumeCmdsToBlocks();
+        Meta meta = new Meta();
+        TreeSet<Block> fileBlockData = getLatestBlocks();
+        byte[] blockDatas = blockListToBytes(fileBlockData);
+        meta.setFilename(this.originalFileName);
+        meta.setBlockListSize(fileBlockData.size());
+        meta.setFileLen(blockDatas.length);
+        meta.setKeyEnd(this.header.keyEnd);
+        meta.setKeyStart(this.header.keyStart);
+        return meta;
     }
 
     public SegmentHeader getHeader() {
@@ -424,7 +438,6 @@ public class SegmentFile implements Closeable, SortableFileName {
     }
 
 
-
     private boolean fileContentNotChanged() {
         consumeCmdsToBlocks();
         if (this.toAddBlockList.isEmpty() && this.toRemoveBlockList.isEmpty()) {
@@ -448,27 +461,17 @@ public class SegmentFile implements Closeable, SortableFileName {
             FileOutputStream fs = null;
             try {
                 lock.writeLock().lock();
-                //先加载旧文件中的内容到blockList中
-                HeaderAndBlockData headerAndBlockData = loadData();
-                TreeSet<Block> fileBlockData = new TreeSet<>(Block.read((int) this.headerLen, headerAndBlockData.blocks, this.originalFileName, WholeBlockReader.WHOLE_BLOCK_READER));
+
+                TreeSet<Block> fileBlockData = getLatestBlocks();
+
                 String oldFile = this.originalFileName;
 
-
-                fs = new FileOutputStream(this.originalFileName);
-
-                for (Block b : toAddBlockList) {
-                    if (!fileBlockData.add(b)) {
-                        fileBlockData.remove(b);
-                        fileBlockData.add(b);
-                    }
-                }
-
-                fileBlockData.removeAll(toRemoveBlockList);
                 byte[] blockDatas = blockListToBytes(fileBlockData);
                 updateHeader(fileBlockData, blockDatas.length);
 
                 byte[] header = this.header.toBytes();
 
+                fs = new FileOutputStream(this.originalFileName);
                 fs.write(header);
                 fs.write(blockDatas);
                 fs.flush();
@@ -498,6 +501,28 @@ public class SegmentFile implements Closeable, SortableFileName {
 
             log.debug("file {} flush successfully", this.originalFileName);
         }
+    }
+
+    /**
+     * 清空队列中的的数据，并从磁盘上获取源数据，再merge之后，得到最新的 block list
+     *
+     * @return 最新的block list
+     */
+    private TreeSet<Block> getLatestBlocks() {
+        //先加载旧文件中的内容到blockList中
+        HeaderAndBlockData headerAndBlockData = loadData();
+
+        TreeSet<Block> fileBlockData = new TreeSet<>(Block.read((int) this.headerLen, headerAndBlockData.blocks, this.originalFileName, WholeBlockReader.WHOLE_BLOCK_READER));
+
+        for (Block b : toAddBlockList) {
+            if (!fileBlockData.add(b)) {
+                fileBlockData.remove(b);
+                fileBlockData.add(b);
+            }
+        }
+
+        fileBlockData.removeAll(toRemoveBlockList);
+        return fileBlockData;
     }
 
     private void updateHeader(NavigableSet<Block> fileBlockData, int blockLen) {
@@ -588,7 +613,7 @@ public class SegmentFile implements Closeable, SortableFileName {
         try {
             cache = cacheFileContent.get(true);
         } catch (ExecutionException e) {
-            log.info(e.getMessage(),e);
+            log.info(e.getMessage(), e);
             return loadDataFromFS();
         }
         if (fileContentNotChanged() && cache != null && cache.blocks != null) {

@@ -423,17 +423,13 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
      * @return
      */
     public State getState() {
-        List<Meta> metas = this.segmentFiles.stream().map(s -> {
-
-            return new Meta(s.getHeader(), s.getOriginalFileName());
-
-        }).collect(Collectors.toList());
+        List<Meta> metas = this.segmentFiles.stream().map(SegmentFile::getMetaData).collect(Collectors.toList());
 
         State state = new State();
         state.setMetas(metas);
         state.setFileCount(metas.size());
         state.setPath(this.path);
-        state.setDataSize(metas.stream().map(s -> s.getMetadata().fileLen).reduce(0L, (a, b) -> a + b));
+        state.setDataSize(metas.stream().map(Meta::getFileLen).reduce(0L, (a, b) -> a + b));
         return state;
 
     }

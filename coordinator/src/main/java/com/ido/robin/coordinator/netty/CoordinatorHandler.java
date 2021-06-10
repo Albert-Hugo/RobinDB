@@ -139,7 +139,7 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 List<State> states = serverList.stream().filter(DistributedServer::healthy).map(a -> {
                     DistributedWebServer s = (DistributedWebServer) a;
                     return s.state();
-                }).filter(a -> a != null && a.getMetas() != null && a.getMetas().get(0).getMetadata().getSegmentFileName() != null).collect(Collectors.toList());
+                }).filter(a -> a != null && a.getMetas() != null && a.getMetas().get(0).getFilename() != null).collect(Collectors.toList());
 
                 return RequestUtil.buildJsonRsp(states);
             } else if (route.equals(Route.NODES_INFO)) {

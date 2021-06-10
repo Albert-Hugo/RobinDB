@@ -1,6 +1,5 @@
 package com.ido.robin.sstable.dto;
 
-import com.ido.robin.sstable.SegmentHeader;
 import lombok.Data;
 
 /**
@@ -9,21 +8,26 @@ import lombok.Data;
  */
 @Data
 public class Meta {
-    SegmentHeader metadata;
     String filename;
+    /**
+     * 开始的key
+     */
+    String keyStart;
+    /**
+     * 结束的key
+     */
+    String keyEnd;
+    /***
+     * 文件block List 的 数量
+     */
+    long blockListSize;
+    /**
+     * 文件总长度
+     */
+    long fileLen;
 
-    public Meta(SegmentHeader metadata, String filename) {
-        this.metadata = metadata;
-        this.filename = filename;
-    }
 
-    @Override
-    public String toString() {
-        return "Meta{" +
-                "metadata=" + metadata +
-                ", filename='" + filename + '\'' +
-                '}';
-    }
+
 
 
 }

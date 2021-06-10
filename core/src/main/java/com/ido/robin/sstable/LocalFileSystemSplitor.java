@@ -142,7 +142,7 @@ public class LocalFileSystemSplitor implements FileSplitor {
         try (SegmentFile file = new SegmentFile(path + fName)) {
             file.addBlockList(boundle);
             file.flush();
-            log.debug("splitted file {},key range {} ,{}  ", file.getOriginalFileName(), file.getHeader().keyStart, file.getHeader().keyEnd);
+            log.debug("splitted file {},key range {} ,{}  ", file.getOriginalFileName());
             resultFiles.add(file.getOriginalFileName());
         } catch (IOException e) {
             log.error(e.getMessage(), e);
