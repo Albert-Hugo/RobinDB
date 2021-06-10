@@ -1,6 +1,7 @@
 package com.ido.robin.coordinator;
 
 import com.ido.robin.client.RobinClient;
+import com.ido.robin.common.HashUtil;
 import com.ido.robin.common.HttpUtil;
 import com.ido.robin.coordinator.exception.ServerNotFoundException;
 import com.ido.robin.rpc.proto.RemoteCmd;
@@ -102,7 +103,7 @@ public class Coordinator {
      */
     public DistributedServer choose(String key) throws ServerNotFoundException {
         //todo for not healthy node , not to return or duplicate data to other nodes.
-        int hashVal = hash(key);
+        int hashVal = HashUtil.hash(key);
         Optional<DistributedServer> s = servers.stream().filter(server -> server.isInRange(hashVal)).findFirst();
         if (!s.isPresent()) {
             throw new ServerNotFoundException("server not found by " + key);
@@ -207,8 +208,5 @@ public class Coordinator {
     }
 
 
-    private int hash(String key) {
-        return Math.abs(key.hashCode());
-    }
 
 }

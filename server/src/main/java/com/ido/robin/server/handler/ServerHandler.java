@@ -2,6 +2,7 @@ package com.ido.robin.server.handler;
 
 import com.google.protobuf.ByteString;
 import com.ido.robin.client.RobinClient;
+import com.ido.robin.common.HashUtil;
 import com.ido.robin.rpc.proto.RemoteCmd;
 import com.ido.robin.server.SSTableManager;
 import com.ido.robin.sstable.Block;
@@ -162,7 +163,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RemoteCmd.Cmd> {
         SSTable ssTable = SSTableManager.getInstance();
         NavigableSet<Block> targetBlocks = new TreeSet<>();
         ssTable.getSegmentFiles().forEach(segmentFile -> {
-            List<Block> bs = segmentFile.getBlockList().stream().filter(block -> block.getKey().hashCode() <= end && block.getKey().hashCode() >= start).collect(Collectors.toList());
+            List<Block> bs = segmentFile.getBlockList().stream().filter(block -> HashUtil.hash(block.getKey()) <= end && HashUtil.hash(block.getKey()) >= start).collect(Collectors.toList());
             targetBlocks.addAll(bs);
 
         });

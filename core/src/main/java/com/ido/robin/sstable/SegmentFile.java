@@ -184,6 +184,7 @@ public class SegmentFile implements Closeable, SortableFileName {
         Meta meta = new Meta();
         TreeSet<Block> fileBlockData = getLatestBlocks();
         byte[] blockDatas = blockListToBytes(fileBlockData);
+        updateHeader(fileBlockData, blockDatas.length);
         meta.setFilename(this.originalFileName);
         meta.setBlockListSize(fileBlockData.size());
         meta.setFileLen(blockDatas.length);
