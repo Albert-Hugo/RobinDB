@@ -12,7 +12,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,9 +50,10 @@ public class KeysDetailController implements RequestController {
             keyDetail.setTotal(t.get().getBlockList().size());
             return RequestUtil.buildJsonRsp(keyDetail);
         }
+        KeyDetail keyDetail = new KeyDetail();
 
         log.warn("file not found {}", getCmd.file);
-        return RequestUtil.buildJsonRsp(Collections.emptyList());
+        return RequestUtil.buildJsonRsp(keyDetail);
 
     }
 }
