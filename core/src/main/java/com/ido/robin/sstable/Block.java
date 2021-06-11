@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.ido.robin.common.Constant.EXPIRED_TIME_PERMANENT;
+
 /**
  * @author Ido
  * @date 2019/8/31 16:31
@@ -19,7 +21,7 @@ public class Block implements Comparable<Block> {
     protected static int IS_COMPRESS_FLAG_SIZE = 1;
     protected static int VAL_LEN_SIZE = 8;
     protected static int EXPIRED_TIME_SIZE = 8;
-    public final static long PERMANENT = -1;
+    public final static long PERMANENT = EXPIRED_TIME_PERMANENT;
     /**
      * 超过指定字节数的val ，自动压缩
      */

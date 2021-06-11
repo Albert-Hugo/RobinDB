@@ -21,7 +21,7 @@ public class PutKeyController implements RequestController {
 
         PutCmd cmd = RequestUtil.extractRequestParams(request, PutCmd.class);
         log.info("put key :{},val :{}", cmd.key, cmd.val);
-        SSTableManager.getInstance().put(cmd.key, cmd.val);
+        SSTableManager.getInstance().put(cmd.key, cmd.val, cmd.expiredTime);
         return RequestUtil.buildHttpRsp("ok");
     }
 }
