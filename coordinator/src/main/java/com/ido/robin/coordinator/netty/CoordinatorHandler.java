@@ -140,7 +140,7 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                     DistributedWebServer s = (DistributedWebServer) a;
                     return s.state();
                 }).filter(a -> a != null && a.getMetas() != null && a.getMetas().get(0).getFilename() != null).collect(Collectors.toList());
-
+                //todo add node info to result data, host and port
                 return RequestUtil.buildJsonRsp(states);
             } else if (route.equals(Route.NODES_INFO)) {
                 List<DistributedServer> serverList = coordinator.getServers();
