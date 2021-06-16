@@ -430,6 +430,7 @@ public class SSTable implements Closeable, FileManager.SegmentFileChangeListener
         state.setFileCount(metas.size());
         state.setPath(this.path);
         state.setDataSize(metas.stream().map(Meta::getFileLen).reduce(0L, (a, b) -> a + b));
+        state.setKeyCount(metas.stream().map(Meta::getBlockListSize).reduce(0L, (a, b) -> a + b));
         return state;
 
     }

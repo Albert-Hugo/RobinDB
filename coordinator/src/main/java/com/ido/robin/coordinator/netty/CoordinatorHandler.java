@@ -5,6 +5,7 @@ import com.ido.robin.coordinator.Coordinator;
 import com.ido.robin.coordinator.DistributedServer;
 import com.ido.robin.coordinator.DistributedWebServer;
 import com.ido.robin.coordinator.dto.NodeInfo;
+import com.ido.robin.coordinator.dto.StateRsp;
 import com.ido.robin.coordinator.exception.ServerNotFoundException;
 import com.ido.robin.server.constant.Route;
 import com.ido.robin.server.controller.dto.GetCmd;
@@ -13,7 +14,6 @@ import com.ido.robin.server.controller.dto.KeyDetail;
 import com.ido.robin.server.controller.dto.PutCmd;
 import com.ido.robin.server.controller.dto.RemoveCmd;
 import com.ido.robin.server.util.RequestUtil;
-import com.ido.robin.sstable.dto.State;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -136,11 +136,14 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
             } else if (route.equals(Route.STATE)) {
                 List<DistributedServer> serverList = coordinator.getServers();
                 //只获取 healthy 的节点数据
-                List<State> states = serverList.stream().filter(DistributedServer::healthy).map(a -> {
+                List<StateRsp> states = serverList.stream().filter(DistributedServer::healthy).map(a -> {
                     DistributedWebServer s = (DistributedWebServer) a;
-                    return s.state();
-                }).filter(a -> a != null && a.getMetas() != null && a.getMetas().get(0).getFilename() != null).collect(Collectors.toList());
-                //todo add node info to result data, host and port
+                    StateRsp stateRsp = new StateRsp();
+                    stateRsp.setHost(s.host());
+                    stateRsp.setPort(s.getHttpPort());
+                    stateRsp.setState(s.state());
+                    return stateRsp;
+                }).filter(a -> a.getState().getMetas() != null && a.getState().getMetas().get(0).getFilename() != null).collect(Collectors.toList());
                 return RequestUtil.buildJsonRsp(states);
             } else if (route.equals(Route.NODES_INFO)) {
                 List<DistributedServer> serverList = coordinator.getServers();

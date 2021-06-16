@@ -11,9 +11,22 @@ import java.util.List;
 @Data
 public class State {
     List<Meta> metas;
+    /**
+     * 数据文件存储路径
+     */
     private String path;
+    /**
+     * 总文件大小
+     */
     private long dataSize;
+    /**
+     * 总文件数量
+     */
     private int fileCount;
+    /**
+     * 总key 数量
+     */
+    private long keyCount;
 
     public List<Meta> getMetas() {
         return metas;
