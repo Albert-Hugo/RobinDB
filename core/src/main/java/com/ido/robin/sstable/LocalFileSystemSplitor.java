@@ -77,31 +77,35 @@ public class LocalFileSystemSplitor implements FileSplitor {
     @Override
     public List<String> split(SegmentFile r) {
         synchronized (r.getOriginalFileName().intern()) {
-
+            int count = 0;
             List<String> resultFiles = new ArrayList<>();
             List<Block> blocks = r.getBlockList();
+            log.info("segment file [{}]初始 block 数量为{}", r.getOriginalFileName(), blocks.size());
             if (!new File(r.getOriginalFileName()).delete()) {
                 log.error("文件删除失败 :{}", r.getOriginalFileName());
                 return Collections.EMPTY_LIST;
             }
-            List<Block> boundle = new ArrayList<>();
 
-            int totalFileSize = 0;
+
+            List<Block> boundle = new ArrayList<>();
+            final int splitThreshold = this.maxBlockListSize / 2;
             for (Block block : blocks) {
-                if (totalFileSize < this.maxBlockListSize / 2) {
-                    totalFileSize = totalFileSize + 1;
-                    boundle.add(block);
-                } else {
+                boundle.add(block);
+                if (boundle.size() == splitThreshold) {
+                    count = boundle.size() + count;
                     // create a new segment file
                     bundleBlockToFIle(r.getPath(), resultFiles, boundle);
                     boundle.clear();
-                    totalFileSize = 0;
                 }
 
             }
 
             if (!boundle.isEmpty()) {
+                count = boundle.size() + count;
                 bundleBlockToFIle(r.getPath(), resultFiles, boundle);
+            }
+            if (count != blocks.size()) {
+                log.error("split file total size [{}] is not equal original block size [{}]! ", count, blocks.size());
             }
 
 
@@ -137,12 +141,20 @@ public class LocalFileSystemSplitor implements FileSplitor {
         }
     }
 
+    /**
+     * 将打包的block 生成新的 segment file
+     *
+     * @param path        数据存储路径
+     * @param resultFiles 生成的新文件名
+     * @param boundle     待转换的block list
+     */
     private void bundleBlockToFIle(String path, List<String> resultFiles, List<Block> boundle) {
         String fName = UUID.randomUUID().toString().replace("-", "") + SEGMENT_FILE_SUFFIX;
         try (SegmentFile file = new SegmentFile(path + fName)) {
             file.addBlockList(boundle);
             file.flush();
             log.debug("splitted file {},key range {} ,{}  ", file.getOriginalFileName());
+            log.info("新segment file [{}] , block 数量 [{}]", fName, boundle.size());
             resultFiles.add(file.getOriginalFileName());
         } catch (IOException e) {
             log.error(e.getMessage(), e);
