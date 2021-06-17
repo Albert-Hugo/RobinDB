@@ -38,6 +38,10 @@ public class DistributedWebServer implements DistributedServer {
         this.name = name;
     }
 
+    public DistributedWebServer(String host, int port, int httpPort) {
+        this(host + ":" + port, host, port, httpPort);
+    }
+
     public byte[] delete(RemoveCmd cmd) {
         byte[] bs = HttpUtil.postJson(makeUrl(Route.DELETE), cmd, null);
         return bs;

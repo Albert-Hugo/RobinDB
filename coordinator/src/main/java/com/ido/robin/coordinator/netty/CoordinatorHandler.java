@@ -171,7 +171,7 @@ public class CoordinatorHandler extends ChannelInboundHandlerAdapter {
                 RemoveNodeCmd cmd = GSON.fromJson(new String(data), RemoveNodeCmd.class);
 
                 try {
-                    coordinator.addNode(new DistributedWebServer("default", cmd.host, cmd.port, cmd.httpPort));
+                    coordinator.addNode(new DistributedWebServer(cmd.host, cmd.port, cmd.httpPort));
                 } catch (Exception e) {
                     return RequestUtil.buildHttpRsp(e.getMessage());
                 }
