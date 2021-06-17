@@ -28,7 +28,7 @@ public class LocalFileSystemSplitor implements FileSplitor {
     /**
      * segment file 最大的block list 数
      */
-    private int maxBlockListSize = 2000;
+    private int maxBlockListSize = 5000;
 
     public LocalFileSystemSplitor() {
     }
@@ -88,10 +88,9 @@ public class LocalFileSystemSplitor implements FileSplitor {
 
 
             List<Block> boundle = new ArrayList<>();
-            final int splitThreshold = this.maxBlockListSize / 2;
             for (Block block : blocks) {
                 boundle.add(block);
-                if (boundle.size() == splitThreshold) {
+                if (boundle.size() == this.maxBlockListSize) {
                     count = boundle.size() + count;
                     // create a new segment file
                     bundleBlockToFIle(r.getPath(), resultFiles, boundle);
